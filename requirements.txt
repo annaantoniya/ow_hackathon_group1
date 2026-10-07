@@ -1,0 +1,9 @@
+streamlit>=1.50
+pydeck
+altair
+pandas
+numpy
+scikit-learn
+statsmodels
+h3>=4
+pyyaml

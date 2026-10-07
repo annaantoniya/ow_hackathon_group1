@@ -1,0 +1,17 @@
+# Ruhige, neutrale Basis. Blau gehört den Daten und aktiven Elementen.
+[theme]
+base = "light"
+primaryColor = "#2C6EF2"
+backgroundColor = "#F2F3F5"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#1C1E22"
+font = "sans serif"
+
+[theme.sidebar]
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F2F3F5"
+textColor = "#1C1E22"
+primaryColor = "#2C6EF2"
+
+[client]
+toolbarMode = "minimal"
