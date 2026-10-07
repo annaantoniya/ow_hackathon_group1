@@ -1,4 +1,6 @@
-# Umsetzungsspezifikation
+# Umsetzungsspezifikation: White Spots in München, Frankfurt und Berlin
+
+Stand: 7. Oktober 2026
 
 Diese Fassung ist so geschrieben, dass Claude oder Claude Code sie ohne Rückfragen umsetzen kann. Sie beschreibt eine Pipeline und eine Kartenanwendung, die für München, Frankfurt und Berlin White Spots für einen Premium-Food-Markt berechnet und erklärt.
 
@@ -18,7 +20,7 @@ Baue zwei Dinge: eine Datenpipeline, die je Stadt eine Tabelle mit Score und Tre
 **Bereits vorhanden:**
 
 | Datei | Leistet | Stand |
-| --- | --- | --- |
+|---|---|---|
 | `fetch_osm.py` | Holt alle POIs je Stadt in einer Overpass-Anfrage, speichert die Antwort im Ordner `cache/` | Logik mit Testdaten geprüft, gegen die echte API ungetestet |
 | `build_grid.py` | Bringt Zensus und POIs je Stadt auf das Hexagon-Raster | Zensus-Teil mit echten Daten für alle drei Städte gelaufen, POI-Teil nur mit Testpunkten |
 
@@ -28,7 +30,7 @@ Baue zwei Dinge: eine Datenpipeline, die je Stadt eine Tabelle mit Score und Tre
 
 Alles läuft in Python, ohne Datenbank und ohne Dienste, die einen Schlüssel brauchen.
 
-**Pakete:** pandas, numpy, h3 (Version 4), pyproj, pyshp, shapely, scikit-learn, pyyaml, streamlit, pydeck. Die vorhandenen Skripte liefen mit pandas 3.0, numpy 2.4, h3 4.5 und scikit-learn 1.8.
+**Pakete:** pandas, numpy, h3 (Version 4), pyproj, pyshp, shapely, scikit-learn, statsmodels, pyyaml, streamlit, pydeck. Die vorhandenen Skripte liefen mit pandas 3.0, numpy 2.4, h3 4.5 und scikit-learn 1.8.
 
 **Ordnerstruktur:**
 
@@ -38,6 +40,7 @@ whitespot/
   fetch_osm.py       vorhanden
   build_grid.py      vorhanden
   model.py           Schritte 3 bis 8 aus Abschnitt 5
+  luecke.py          Schritt 8a aus Abschnitt 6.14
   robustness.py      Schritt 9
   portfolio.py       Schritt 10
   run_all.py         ruft alles in Reihenfolge auf
@@ -60,12 +63,10 @@ whitespot/
 
 ## 3. Städte und Untersuchungsgebiet
 
-Das Untersuchungsgebiet je Stadt ist die amtliche Stadtgrenze plus 1.500 m Puffer. Gerechnet wird auf dem Gebiet mit Puffer, bewertet und gereiht werden nur Zellen mit `in_stadt == True`.
+Das Untersuchungsgebiet je Stadt ist die amtliche Stadtgrenze plus 1.500 m Puffer. Gerechnet wird auf dem Gebiet mit Puffer, bewertet und gereiht werden nur Zellen mit `in_stadt == True`. Der Puffer verhindert Randeffekte: Ohne ihn sähen Zellen am Stadtrand nur die halbe Nachbarschaft.
 
-Der Puffer verhindert Randeffekte: Ohne ihn sähen Zellen am Stadtrand nur die halbe Nachbarschaft.
-
-| Schlüssel | Amtlicher Schlüssel (AGS) | Rechteck: Süd, West, Nord, Ost | Hexagone mit Puffer | Hexagone in der Stadt | Einwohner in der Stadt | Median-Miete je Hexagon |
-| --- | --- | --- | --- | --- | --- | --- |
+| Schlüssel | AGS | Rechteck: Süd, West, Nord, Ost | Hexagone mit Puffer | Hexagone in der Stadt | Einwohner in der Stadt | Median-Miete je Hexagon |
+|---|---|---|---|---|---|---|
 | `muenchen` | 09162 | 48.048, 11.341, 48.262, 11.743 | 4.540 | 3.055 | 1.475.469 | 13,19 Euro je m² |
 | `frankfurt` | 06412 | 50.002, 8.452, 50.240, 8.822 | 4.119 | 2.590 | 744.205 | 9,94 Euro je m² |
 | `berlin` | 11000 | 52.325, 13.066, 52.689, 13.782 | 12.574 | 9.472 | 3.594.123 | 7,71 Euro je m² |
@@ -76,14 +77,15 @@ Alle Zahlen stammen aus dem Testlauf von `build_grid.py` am 7. Oktober 2026. Sie
 
 ## 4. Daten
 
-Die Pipeline nutzt fünf Dateien des Zensus 2022 und einen POI-Abruf aus OpenStreetMap je Stadt.
-
 ### 4.1 Zensus 2022
 
-**Quelle:** [Statistisches Bundesamt, Zensus 2022](https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bevoelkerung/Zensus2022/_inhalt.html), Abschnitt Publikationen. Alle Archive liegen unter `https://www.destatis.de/static/DE/zensus/gitterdaten/<Archivname>`. Sie werden in den Ordner `zensus/` entpackt.
+**Quelle:** Statistisches Bundesamt, Zensus 2022, Abschnitt Publikationen:
+https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bevoelkerung/Zensus2022/_inhalt.html
+
+Alle Archive liegen unter `https://www.destatis.de/static/DE/zensus/gitterdaten/<Archivname>` und werden in den Ordner `zensus/` entpackt.
 
 | Archiv | Genutzte Datei | Genutzte Spalten |
-| --- | --- | --- |
+|---|---|---|
 | `Zensus2022_Bevoelkerungszahl.zip` | `*Bevoelkerungszahl_100m-Gitter.csv` | `Einwohner` |
 | `Durchschnittliche_Nettokaltmiete_und_Anzahl_der_Wohnungen.zip` | `*Nettokaltmiete_Anzahl_der_Wohnungen_100m-Gitter.csv` | `durchschnMieteQM`, `AnzahlWohnungen`, `werterlaeuternde_Zeichen` |
 | `Alter_in_10er-Jahresgruppen.zip` | `*Alter_in_10er-Jahresgruppen_100m-Gitter.csv` | `Insgesamt_Bevoelkerung`, `Unter10`, `a10bis19`, `a20bis29`, `a30bis39`, `a40bis49`, `a50bis59`, `a60bis69`, `a70bis79`, `a80undaelter` |
@@ -113,8 +115,8 @@ Die Pipeline nutzt fünf Dateien des Zensus 2022 und einen POI-Abruf aus OpenStr
 **Abruf:** `python fetch_osm.py` holt die drei Städte nacheinander, mit 20 Sekunden Pause dazwischen. Die Rechtecke aus Abschnitt 3 sind im Skript hinterlegt. Ergebnis ist `data/<stadt>_pois.csv` mit den Spalten `osm_id`, `lat`, `lon`, `gruppe`, `kategorie`, `name`, `brand`, `cuisine`, `organic`.
 
 | Gruppe | Kategorien | Rolle im Modell |
-| --- | --- | --- |
-| `wettbewerb_direkt` | `deli`, `feinkost_kaese`, `wein`, `bio_markt`, `reformhaus`, `markthalle`, `pasta` | Wettbewerb im Huff-Modell, Grundlage des Plausibilitätstests |
+|---|---|---|
+| `wettbewerb_direkt` | `deli`, `feinkost_kaese`, `wein`, `bio_markt`, `reformhaus`, `markthalle`, `pasta` | Wettbewerb im Huff-Modell, Zielgröße der Angebotslücke, Grundlage des Plausibilitätstests |
 | `wettbewerb_breit` | `supermarkt`, `obst_gemuese`, `metzger`, `baecker`, `fisch` | Wettbewerb im Huff-Modell mit geringem Gewicht |
 | `affinitaet` | `cafe`, `restaurant`, `bar`, `buchhandlung`, `interior`, `boutique`, `blumen`, `fitness_yoga`, `kultur`, `galerie_museum`, `coworking`, `fahrradladen` | Affinitätsfaktor |
 | `frequenz` | `bahnhof`, `tram_ubahn`, `bus`, `buero`, `hochschule` | Index der Tagesbevölkerung |
@@ -130,10 +132,10 @@ Jede Kategorie gehört zu genau einem Baustein. Gastronomie ist Affinität und n
 
 ### 4.3 Ergebnis der Aufbereitung
 
-`data/<stadt>_grid.csv` enthält eine Zeile pro Hexagon mit diesen Spalten:
+`data/<stadt>_grid.csv` enthält eine Zeile pro Hexagon:
 
 | Spalte | Inhalt |
-| --- | --- |
+|---|---|
 | `h3` | Kennung des Hexagons |
 | `lat`, `lon` | Mittelpunkt |
 | `stadt` | Schlüssel der Stadt |
@@ -150,10 +152,10 @@ Jede Kategorie gehört zu genau einem Baustein. Gastronomie ist Affinität und n
 
 ## 5. Pipeline
 
-Die Pipeline hat elf Schritte. Die ersten zwei sind vorhanden, neun sind zu bauen. `run_all.py` ruft die Schritte 2 bis 10 für alle drei Städte in dieser Reihenfolge auf.
+Die Pipeline hat elf Schritte. Die ersten zwei sind vorhanden, neun sind zu bauen. Dazu kommt Schritt 8a aus Abschnitt 6.14, die Angebotslücke als Residuum. `run_all.py` ruft die Schritte 2 bis 10 für alle drei Städte in dieser Reihenfolge auf.
 
 | Nr. | Schritt | Datei | Eingabe | Ausgabe |
-| --- | --- | --- | --- | --- |
+|---|---|---|---|---|
 | 1 | POIs abrufen | `fetch_osm.py` | Overpass | `data/<stadt>_pois.csv` |
 | 2 | Raster bauen | `build_grid.py` | `zensus/`, POIs | `data/<stadt>_grid.csv` |
 | 3 | Nachbarschaften berechnen | `model.py` | Raster | Paarliste im Arbeitsspeicher |
@@ -162,6 +164,7 @@ Die Pipeline hat elf Schritte. Die ersten zwei sind vorhanden, neun sind zu baue
 | 6 | Potenzial und Wettbewerb | `model.py` | alles Vorige | Spalten `p_anw`, `p_tag`, `p`, `u_anw`, `u_tag`, `u`, `w` |
 | 7 | Filter, Ränge, Profil | `model.py` | alles Vorige | Spalten `geschaeftslage`, `rang`, `pr_*`, `anteil_tag`, `profil` |
 | 8 | Plausibilitätstest | `model.py` | Score, POIs | `data/<stadt>_plausibilitaet.json` |
+| 8a | Angebotslücke | `luecke.py` | Raster, Paarliste, Affinität | Spalten aus 6.14, dazu `data/luecke_modell.json` |
 | 9 | Robustheit | `robustness.py` | Raster, Paarliste | Spalten `top10_anteil`, `rang_median`, `rang_p10`, `rang_p90` |
 | 10 | Portfolio | `portfolio.py` | Score-Bausteine | `data/<stadt>_portfolio.csv` |
 | 11 | Anwendung | `app.py` | `data/<stadt>_scored.csv` und Begleitdateien | Karte |
@@ -184,21 +187,17 @@ Eine Summe über Nachbarn ist dann eine gewichtete Zählung über die Paarliste,
 
 ## 6. Modell
 
-Der Score U eines Standorts ist die Nachfrage, die ein neuer Laden dort gewinnen würde. Die folgenden Formeln stehen in Rechenreihenfolge. Alle Summen laufen über die Paarliste aus Schritt 3, alle Parameter kommen aus Abschnitt 7.
+Der Score U eines Standorts ist die Nachfrage, die ein neuer Laden dort gewinnen würde. Die Formeln stehen in Rechenreihenfolge. Alle Summen laufen über die Paarliste aus Schritt 3, alle Parameter kommen aus Abschnitt 7.
 
 ### 6.1 Distanzgewicht
 
-```latex
-f_h(d) = 2^{-d/h} \quad \text{für } d \le d_{\max}, \qquad f_h(d) = 0 \text{ sonst}
-```
+$$f_h(d) = 2^{-d/h} \quad \text{für } d \le d_{\max}, \qquad f_h(d) = 0 \text{ sonst}$$
 
 h ist die Halbwertsdistanz. Es gibt drei Werte: für Anwohner, für Tagesbevölkerung und für die Affinität.
 
 ### 6.2 Nachfrage der Anwohner
 
-```latex
-N_i = E_i \cdot a_i \cdot k_i, \qquad k_i = \left( \min\!\left( \max\!\left( \frac{m_i}{\tilde{m}},\, k_{\min} \right),\, k_{\max} \right) \right)^{\gamma}
-```
+$$N_i = E_i \cdot a_i \cdot k_i, \qquad k_i = \left( \min\!\left( \max\!\left( \frac{m_i}{\tilde{m}},\, k_{\min} \right),\, k_{\max} \right) \right)^{\gamma}$$
 
 - E ist `einwohner`, a ist `anteil_20_49`, m ist `miete_qm`.
 - Der Median der Miete wird je Stadt gebildet, über Zellen mit `in_stadt` und ohne `miete_geschaetzt`.
@@ -206,9 +205,7 @@ N_i = E_i \cdot a_i \cdot k_i, \qquad k_i = \left( \min\!\left( \max\!\left( \fr
 
 ### 6.3 Index der Tagesbevölkerung
 
-```latex
-t_i = \sum_{c \in \text{Frequenz}} w_c \cdot \text{poi}_{c,i}
-```
+$$t_i = \sum_{c \in \text{Frequenz}} w_c \cdot \text{poi}_{c,i}$$
 
 Die Gewichte w je Kategorie stehen in Abschnitt 7. Der Index misst keine Personen, nur ein relatives Mehr oder Weniger.
 
@@ -220,9 +217,7 @@ Die Gewichte w je Kategorie stehen in Abschnitt 7. Der Index misst keine Persone
 4. Das Vorzeichen der ersten Komponente so drehen, dass sie positiv mit dem Mittelwert der zwölf Spalten korreliert.
 5. Den Index in einen Faktor q übersetzen.
 
-```latex
-s_{c,i} = \sum_j \text{poi}_{c,j}\, f_{h_{\text{Aff}}}(d_{ij}), \qquad q_i = q_{\min} + (q_{\max} - q_{\min}) \cdot \text{Prozentrang}(\text{Index}_i)
-```
+$$s_{c,i} = \sum_j \text{poi}_{c,j}\, f_{h_{\text{Aff}}}(d_{ij}), \qquad q_i = q_{\min} + (q_{\max} - q_{\min}) \cdot \text{Prozentrang}(\text{Index}_i)$$
 
 Der Prozentrang liegt zwischen 0 und 1 und wird über die Zellen mit `in_stadt` gebildet. Zellen im Puffer erhalten den Prozentrang, den ihr Indexwert innerhalb der Verteilung der Stadtzellen hätte.
 
@@ -232,9 +227,7 @@ Der Prozentrang liegt zwischen 0 und 1 und wird über die Zellen mit `in_stadt` 
 
 Die Nachfrage wird in zwei Teilen geführt, weil beide Gruppen unterschiedliche Reichweiten haben.
 
-```latex
-O^{A}_i = q_i \cdot (1-\theta) \cdot \frac{N_i}{\sum_j N_j}, \qquad O^{T}_i = q_i \cdot \theta \cdot \frac{t_i}{\sum_j t_j}
-```
+$$O^{A}_i = q_i \cdot (1-\theta) \cdot \frac{N_i}{\sum_j N_j}, \qquad O^{T}_i = q_i \cdot \theta \cdot \frac{t_i}{\sum_j t_j}$$
 
 Die Summen im Nenner laufen über alle Zellen des Gebiets mit Puffer.
 
@@ -242,9 +235,7 @@ Die Summen im Nenner laufen über alle Zellen des Gebiets mit Puffer.
 
 Das Potenzial ist die Nachfrage, die der neue Laden ohne jeden Wettbewerber gewinnen würde. Es ist das Huff-Modell aus 6.7 mit Wettbewerbsdruck null.
 
-```latex
-P^{A}_c = \sum_i O^{A}_i \cdot \frac{A_{\text{neu}}\, f_{h_A}(d_{ic})}{A_{\text{neu}}\, f_{h_A}(d_{ic}) + A_0}, \qquad P_c = P^{A}_c + P^{T}_c
-```
+$$P^{A}_c = \sum_i O^{A}_i \cdot \frac{A_{\text{neu}}\, f_{h_A}(d_{ic})}{A_{\text{neu}}\, f_{h_A}(d_{ic}) + A_0}, \qquad P_c = P^{A}_c + P^{T}_c$$
 
 Der Tagesteil wird genauso mit dem Tagesgewicht gerechnet. Nur mit dieser Definition gilt, dass U nie größer ist als P. Die einfache Summe der distanzgewichteten Nachfrage erfüllt das nicht.
 
@@ -252,21 +243,15 @@ Der Tagesteil wird genauso mit dem Tagesgewicht gerechnet. Nur mit dieser Defini
 
 Jede Zelle j hat eine Wettbewerbsstärke aus ihren POIs. Jede Quellzelle i sieht daraus einen Wettbewerbsdruck K.
 
-```latex
-A_j = \sum_{c \in \text{Wettbewerb}} \alpha_c \cdot \text{poi}_{c,j}, \qquad K^{A}_i = \sum_j A_j\, f_{h_A}(d_{ij}), \qquad K^{T}_i = \sum_j A_j\, f_{h_T}(d_{ij})
-```
+$$A_j = \sum_{c \in \text{Wettbewerb}} \alpha_c \cdot \text{poi}_{c,j}, \qquad K^{A}_i = \sum_j A_j\, f_{h_A}(d_{ij}), \qquad K^{T}_i = \sum_j A_j\, f_{h_T}(d_{ij})$$
 
 Das Huff-Modell gibt dem neuen Laden am Standort c seinen Anteil an der Nachfrage jeder Quellzelle.
 
-```latex
-U^{A}_c = \sum_i O^{A}_i \cdot \frac{A_{\text{neu}}\, f_{h_A}(d_{ic})}{A_{\text{neu}}\, f_{h_A}(d_{ic}) + K^{A}_i + A_0}
-```
+$$U^{A}_c = \sum_i O^{A}_i \cdot \frac{A_{\text{neu}}\, f_{h_A}(d_{ic})}{A_{\text{neu}}\, f_{h_A}(d_{ic}) + K^{A}_i + A_0}$$
 
 Der Tagesteil wird genauso mit dem Tagesgewicht gerechnet. Score und Zerlegung sind dann:
 
-```latex
-U_c = U^{A}_c + U^{T}_c, \qquad W_c = \frac{U_c}{P_c} \in (0, 1]
-```
+$$U_c = U^{A}_c + U^{T}_c, \qquad W_c = \frac{U_c}{P_c} \in (0, 1]$$
 
 - A0 ist die Außenoption: alle, die online, woanders oder gar nicht kaufen. Sie darf nie null sein.
 - W ist der Anteil des Potenzials, den der Wettbewerb übrig lässt. Hat eine Zelle kein Potenzial, ist W nicht definiert und bleibt leer.
@@ -278,7 +263,7 @@ Eine Zelle ist eine Geschäftslage, wenn in ihr und ihren sechs direkten Nachbar
 ### 6.9 Ränge, Treiber und Profil
 
 | Spalte | Berechnung |
-| --- | --- |
+|---|---|
 | `rang` | Rang nach U, absteigend, je Stadt, nur Zellen mit `in_stadt` und `geschaeftslage` |
 | `pr_score`, `pr_potenzial`, `pr_wettbewerbsfreiheit`, `pr_affinitaet` | Prozentränge von U, P, W und q je Stadt über alle Zellen mit `in_stadt`, Werte von 0 bis 100 |
 | `anteil_tag` | Tagesteil des Potenzials geteilt durch das gesamte Potenzial |
@@ -313,15 +298,79 @@ Der Umwegfaktor wird nicht gezogen. Er skaliert alle Distanzen gleich und wirkt 
 
 Gesucht ist die Menge S aus k Standorten mit der höchsten gemeinsam gewonnenen Nachfrage.
 
-```latex
-F(S) = \sum_i O^{A}_i \cdot \frac{X^{A}_i(S)}{X^{A}_i(S) + K^{A}_i + A_0} \;+\; \sum_i O^{T}_i \cdot \frac{X^{T}_i(S)}{X^{T}_i(S) + K^{T}_i + A_0}, \qquad X^{A}_i(S) = \sum_{c \in S} A_{\text{neu}}\, f_{h_A}(d_{ic})
-```
+$$F(S) = \sum_i O^{A}_i \cdot \frac{X^{A}_i(S)}{X^{A}_i(S) + K^{A}_i + A_0} + \sum_i O^{T}_i \cdot \frac{X^{T}_i(S)}{X^{T}_i(S) + K^{T}_i + A_0}, \qquad X^{A}_i(S) = \sum_{c \in S} A_{\text{neu}}\, f_{h_A}(d_{ic})$$
 
 **Verfahren:** Beginne mit der leeren Menge. Füge in jedem Schritt den Kandidaten hinzu, der F am stärksten erhöht. Kandidaten sind die 300 Geschäftslagen mit dem höchsten U je Stadt.
 
 **Ausgabe** in `data/<stadt>_portfolio.csv`: Reihenfolge, Zelle, Zugewinn je Schritt, F nach jedem Schritt. Dazu eine Vergleichszahl: F des Portfolios geteilt durch F der k besten Einzelstandorte.
 
 F ist monoton und submodular. Das einfache Verfahren erreicht deshalb mindestens 63 Prozent des Optimums (Nemhauser, Wolsey und Fisher, 1978).
+
+### 6.14 Angebotslücke als Residuum
+
+Dieser Schritt schätzt die Gewichte der Standortmerkmale aus den Daten und definiert den White Spot als Lücke zwischen erwartetem und vorhandenem Angebot. Er läuft als Schritt 8a nach dem Plausibilitätstest in einer eigenen Datei `luecke.py`.
+
+**Die Idee:** Eine Regression erklärt, wie viele direkte Wettbewerber eine Zelle hat, aus den Merkmalen ihres Umfelds. Wo das Modell mehr Läden erwartet als vorhanden sind, liegt eine Lücke.
+
+**Zielgröße:** y ist die Zahl der POIs der Gruppe `wettbewerb_direkt` je Zelle. Geschätzt wird nur auf Zellen mit `in_stadt`, alle drei Städte gemeinsam.
+
+**Merkmale:**
+
+| Spalte | Berechnung |
+|---|---|
+| `x_einwohner` | Logarithmus von eins plus der distanzgewichteten Einwohnerzahl im Umfeld, Halbwert `h_anwohner_m` |
+| `x_kaufkraft` | Logarithmus der mit Einwohnern gewichteten mittleren Miete im Umfeld, geteilt durch den Median der Stadt. Ohne Einwohner im Umfeld null. |
+| `x_alter` | Mit Einwohnern gewichteter Anteil der 20- bis 49-Jährigen im Umfeld. Ohne Einwohner im Umfeld der Stadtwert. |
+| `x_affinitaet` | Der Affinitätsindex aus 6.4 |
+| `x_tag` | Logarithmus von eins plus dem distanzgewichteten Index der Tagesbevölkerung, Halbwert `h_tag_m` |
+
+Alle fünf Merkmale werden je Stadt standardisiert. Dadurch sind die Koeffizienten untereinander vergleichbar: Jeder gibt die Wirkung einer Standardabweichung an.
+
+**Modell:** Poisson-Regression mit Stadt als festem Effekt, geschätzt mit `statsmodels.api.GLM` und der Familie `Poisson`.
+
+$$\mathbb{E}[y_c] = \exp\!\Big( \beta_0 + \delta_{\text{Stadt}(c)} + \sum_{k=1}^{5} \beta_k\, x_{k,c} \Big)$$
+
+**Die Lücke** ist das Residuum, über die Laufweite geglättet. Ein Laden in der Nachbarzelle zählt damit fast wie einer in der eigenen.
+
+$$g_c = \sum_j \big( \hat{y}_j - y_j \big)\, f_{h_A}(d_{cj})$$
+
+Ein positiver Wert bedeutet: Im Umfeld gibt es weniger Läden, als die Merkmale erwarten lassen.
+
+**Treiber aus den Daten:** Der Beitrag des Merkmals k in Zelle c ist der Koeffizient mal dem standardisierten Wert. Diese Beiträge addieren sich auf der logarithmischen Skala exakt zur Vorhersage.
+
+**Prüfung der Vorhersagekraft:** Räumliche Kreuzvalidierung in fünf Teilen. Jede Zelle wird über ihre H3-Elternzelle der Auflösung 6 (rund 36 km²) einem Teil zugeordnet, damit Nachbarzellen nicht gleichzeitig in Training und Test liegen. Berichtet wird der Anteil erklärter Devianz außerhalb der Stichprobe. Liegt er unter 0,05, erklären die Merkmale die Standorte nicht, und das Skript gibt eine Warnung aus.
+
+**Überdispersion:** Liegt Pearson-Chi-Quadrat geteilt durch die Freiheitsgrade über 1,5, wird dieselbe Formel als negativ-binomiales Modell geschätzt. Welche Variante gilt, steht in der Ausgabedatei.
+
+**Ausgaben:**
+
+| Ausgabe | Inhalt |
+|---|---|
+| Spalten `y_direkt`, `y_erwartet` | Vorhandene und erwartete Zahl direkter Wettbewerber je Zelle |
+| Spalten `luecke`, `pr_luecke` | Geglättete Lücke und ihr Prozentrang je Stadt über Zellen mit `in_stadt` |
+| Spalten `beitrag_einwohner`, `beitrag_kaufkraft`, `beitrag_alter`, `beitrag_affinitaet`, `beitrag_tag` | Beiträge der Merkmale zur Vorhersage |
+| Spalte `konsens` | Wahr, wenn `pr_score` und `pr_luecke` beide mindestens 90 betragen |
+| `data/luecke_modell.json` | Koeffizienten, Standardfehler, Dispersion, gewählte Variante, erklärte Devianz in und außerhalb der Stichprobe |
+
+**Prüfungen:**
+
+- Die Summe der erwarteten Läden ist je Stadt gleich der Summe der vorhandenen. Das folgt aus dem Modell und muss auf eine Nachkommastelle stimmen.
+- Alle Koeffizienten sind endlich. Ein unerwartetes negatives Vorzeichen wird berichtet und nicht korrigiert.
+- Zwei Läufe liefern identische Ergebnisse.
+
+**In der Anwendung:** Eine zusätzliche Ebene „Angebotslücke“, eine Spalte in der Rangliste, eine Kennzeichnung „Konsens“ für Standorte, die in beiden Sichten vorn liegen, und die Koeffiziententabelle auf der Seite Annahmen.
+
+**Verhältnis zum Score U:** Beide Sichten bleiben nebeneinander stehen. U rechnet mit gesetzten Parametern, wie viel Nachfrage ein neuer Laden gewinnt. Die Lücke lernt aus den Daten, wo Läden fehlen. Die stärksten Kandidaten sind die Konsens-Standorte.
+
+**Einordnung in die Reihenfolge:** Nach Stufe 4 und vor Stufe 5. Fällt der Schritt aus, bleibt U der alleinige Score.
+
+**Grenzen, zusätzlich zu Abschnitt 11:**
+
+- Das Modell lernt, wo Läden stehen, und nicht, wo sie sich lohnen. Es übernimmt die Fehler früherer Standortentscheidungen.
+- Eine große Lücke kann auch bedeuten, dass ein Ort aus Gründen unattraktiv ist, die in den Merkmalen fehlen.
+- Benachbarte Zellen sind nicht unabhängig. Die Standardfehler sind deshalb zu klein und dienen nur zur Orientierung.
+
+**Stand der Prüfung:** Der Rechenweg lief auf den echten Rastern der drei Städte mit simulierten Ladenzahlen durch, mit statsmodels 0.15. Er fand die vorgegebenen Koeffizienten wieder, und die Summen je Stadt stimmten. Mit echten POIs ist er ungetestet.
 
 ## 7. Parameter
 
@@ -330,7 +379,7 @@ Alle Werte stehen in `config.yaml` unter den Schlüsseln der ersten Spalte. Jede
 ### Raster und Distanz
 
 | Schlüssel | Startwert | Spanne | Bedeutung |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | `h3_aufloesung` | 9 | – | Größe der Hexagone |
 | `puffer_m` | 1500 | – | Rand um die Stadtgrenze |
 | `d_max_m` | 1500 | – | Größte berücksichtigte Wegstrecke |
@@ -343,7 +392,7 @@ Alle Werte stehen in `config.yaml` unter den Schlüsseln der ersten Spalte. Jede
 ### Nachfrage
 
 | Schlüssel | Startwert | Spanne | Bedeutung |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | `gamma` | 1,0 | 0,5 bis 1,5 | Wie stark Kaufkraft zählt |
 | `k_min`, `k_max` | 0,5 und 2,0 | – | Grenzen des Kaufkraftfaktors |
 | `theta` | 0,3 | 0,1 bis 0,5 | Anteil der Tagesbevölkerung an der Nachfrage |
@@ -357,7 +406,7 @@ Alle Werte stehen in `config.yaml` unter den Schlüsseln der ersten Spalte. Jede
 ### Wettbewerb
 
 | Schlüssel | Startwert | Spanne | Bedeutung |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | `a_neu` | 2,0 | – | Attraktivität des neuen Ladens, Bezugsgröße |
 | `a_0` | 1,33 | Faktor 0,5 bis 1,5 | Außenoption. Der Startwert bedeutet 60 Prozent Gewinn direkt vor der Tür ohne Wettbewerb. |
 | `alpha_markthalle` | 3,0 | Faktor 0,5 bis 1,5 | Großes, direkt vergleichbares Angebot |
@@ -369,7 +418,7 @@ Alle Werte stehen in `config.yaml` unter den Schlüsseln der ersten Spalte. Jede
 ### Auswertung
 
 | Schlüssel | Startwert | Bedeutung |
-| --- | --- | --- |
+|---|---|---|
 | `n_min_geschaeftslage` | 5 | Mindestzahl POIs in Zelle und Nachbarn |
 | `profil_schwelle_hoch`, `profil_schwelle_tief` | 1,5 und 0,5 | Vielfache von theta für die Profilgrenzen |
 | `plausibilitaet_anteil` | 0,2 | Anteil der besten Zellen im Plausibilitätstest |
@@ -383,14 +432,14 @@ Alle Werte stehen in `config.yaml` unter den Schlüsseln der ersten Spalte. Jede
 
 Die Anwendung liest nur fertige Dateien aus `data/` und rechnet selbst nichts Schweres. Sie muss drei Dinge leisten, die die Aufgabe ausdrücklich verlangt: White Spots zeigen, Standorte vergleichen, Treiber erklären.
 
-**Technik:** Streamlit mit pydeck und der Ebene `H3HexagonLayer`. Die Hintergrundkarte muss ohne Zugangsschlüssel laufen. Meines Wissens geht das mit dem Kartenanbieter `carto` in pydeck, das ist beim Bau zu prüfen.
+**Technik:** Streamlit mit pydeck und der Ebene `H3HexagonLayer`. Die Hintergrundkarte muss ohne Zugangsschlüssel laufen. Vermutlich geht das mit dem Kartenanbieter `carto` in pydeck, das ist beim Bau zu prüfen.
 
 ### Seitenleiste
 
 | Bedienelement | Auswahl |
-| --- | --- |
+|---|---|
 | Stadt | München, Frankfurt, Berlin |
-| Ebene | Score, Potenzial, Wettbewerbsfreiheit, Affinität, Tagesanteil, Stabilität, Einwohner, Miete |
+| Ebene | Score, Angebotslücke, Potenzial, Wettbewerbsfreiheit, Affinität, Tagesanteil, Stabilität, Einwohner, Miete |
 | Nur Geschäftslagen | An oder aus, Standard an |
 | Portfolio zeigen | An oder aus, Standard aus |
 | Maßstab | Innerhalb der Stadt oder gemeinsam über alle drei, Standard innerhalb |
@@ -398,10 +447,10 @@ Die Anwendung liest nur fertige Dateien aus `data/` und rechnet selbst nichts Sc
 ### Ansichten
 
 1. **Karte.** Hexagone, eingefärbt nach dem Prozentrang der gewählten Ebene. Die zehn besten Standorte sind hervorgehoben und nummeriert. Ein Tooltip zeigt Rang, Score-Prozentrang, die drei Treiber und das Profil.
-2. **Rangliste.** Tabelle der zehn besten Standorte mit Rang, Lagebezeichnung, Score-Prozentrang, den drei Treibern, Profil und Stabilität. Ein Klick auf eine Zeile zentriert die Karte.
+2. **Rangliste.** Tabelle der zehn besten Standorte mit Rang, Lagebezeichnung, Score-Prozentrang, Prozentrang der Angebotslücke, Konsens-Kennzeichnung, den drei Treibern, Profil und Stabilität. Ein Klick auf eine Zeile zentriert die Karte.
 3. **Vergleich.** Auswahl von zwei oder drei Standorten aus der Rangliste. Nebeneinander stehen Balken der drei Treiber und die Rohwerte: Einwohner im Umkreis von 400 m, Miete, Zahl der Wettbewerber im Umkreis von 400 m, Profil.
 4. **Treiber-Erklärung.** Für den gewählten Standort ein bis zwei Sätze aus Regeln, dazu ein Balkendiagramm der Zerlegung von U in Potenzial der Anwohner, Potenzial der Tagesbevölkerung und Wettbewerbsfreiheit.
-5. **Annahmen.** Eigene Seite mit der Parametertabelle aus `config.yaml`, den Grenzen aus Abschnitt 11, den Ergebnissen des Plausibilitätstests je Stadt und den Quellenangaben.
+5. **Annahmen.** Eigene Seite mit der Parametertabelle aus `config.yaml`, der Koeffiziententabelle aus 6.14, den Grenzen aus Abschnitt 11, den Ergebnissen des Plausibilitätstests je Stadt und den Quellenangaben.
 
 ### Regeln für die Texte
 
@@ -416,10 +465,10 @@ Jede Seite nennt die Quellen: OpenStreetMap-Mitwirkende und Statistisches Bundes
 
 ## 9. Prüfungen
 
-Jeder Schritt gilt erst als fertig, wenn seine Prüfung besteht. Die Prüfungen liegen als Tests im Ordner `tests/` oder laufen am Ende des jeweiligen Skripts.
+Jeder Schritt gilt erst als fertig, wenn seine Prüfung besteht. Die Prüfungen liegen als Tests im Ordner `tests/` oder laufen am Ende des jeweiligen Skripts. Die Prüfungen für Schritt 8a stehen in 6.14.
 
 | Schritt | Prüfung | Sollwert |
-| --- | --- | --- |
+|---|---|---|
 | 1 POIs | Keine Kategorie hat null Treffer | Je Stadt mindestens ein POI je Kategorie, sonst Warnung |
 | 1 POIs | Stichprobe von Hand | Zehn dem Team bekannte Läden sind enthalten und richtig eingeordnet |
 | 2 Raster | Zahl der Hexagone in der Stadt | München 3.055, Frankfurt 2.590, Berlin 9.472 |
@@ -447,14 +496,15 @@ Jeder Schritt gilt erst als fertig, wenn seine Prüfung besteht. Die Prüfungen 
 Baue in dieser Reihenfolge. Nach jeder Stufe gibt es eine lauffähige, vorzeigbare Version. Eine spätere Stufe beginnt erst, wenn die Prüfungen der vorigen bestehen.
 
 | Stufe | Inhalt | Ergebnis | Rückfall, wenn es hakt |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | 1 | Schritte 1 und 2 für alle drei Städte | Raster mit POIs | Overpass antwortet nicht: Länderauszug von Geofabrik nutzen. Berlin läuft ins Zeitlimit: Anfrage nach Gruppen teilen. |
 | 2 | Durchstich: Schritt 3 und eine vereinfachte Fassung von Schritt 6, dazu Karte mit einer Ebene | Karte mit echtem, grobem Score | Keiner. Diese Stufe muss stehen. |
 | 3 | Schritte 4 bis 7 vollständig | Score, Treiber, Profil, Rangliste | Affinität nicht deutbar: Mittelwert der standardisierten Kategorien statt Hauptkomponente. |
 | 4 | Anwendung mit Rangliste, Vergleich und Treiber-Erklärung | Alle Pflichtfunktionen der Aufgabe | Vergleich als einfache Tabelle statt Balken. |
+| 4a | Schritt 8a, Angebotslücke | Datenbasierte Gewichte, Lücke, Konsens-Standorte | Entfällt. U bleibt der alleinige Score. |
 | 5 | Schritt 8 und Seite Annahmen | Plausibilitätszahl je Stadt | Zahl nur im Pitch nennen. |
 | 6 | Schritt 9 | Stabilität je Standort | 200 statt 1.000 Läufe, oder nur für die 50 besten Standorte ausweisen. |
-| 7 | Schritt 10 | Portfolio je Stadt | Entfällt. Der Spike ist dann das Tag-Nacht-Profil aus Stufe 3. |
+| 7 | Schritt 10 | Portfolio je Stadt | Entfällt. Der Spike ist dann die Angebotslücke oder das Tag-Nacht-Profil. |
 | 8 | Gemeinsamer Maßstab aus 6.11 | Städtevergleich | Entfällt. |
 
 **Vereinfachte Fassung für den Durchstich:** Einwohner je Zelle distanzgewichtet summieren und durch eins plus die distanzgewichtete Zahl der direkten Wettbewerber teilen. Das ersetzt für Stufe 2 die Schritte 4 bis 6.
