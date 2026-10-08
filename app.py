@@ -188,8 +188,8 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .w-intro-zeile p {{ margin: 0; padding: 1.2rem 2rem 1.3rem 0; font-size: 1rem; line-height: 1.65; color: {T['text']}; max-width: 54rem; }}
 .w-intro-zeile .l {{ border-left: 1px solid {T['titel']}; display: flex; align-items: center; justify-content: center; }}
 .w-intro-zeile img {{ width: 4.4rem; height: 4.4rem; border-radius: 50%; }}
-.w-split {{ display: grid; grid-template-columns: 1.2fr 1fr; min-height: 440px; margin-top: 0.8rem; }}
-.w-split .bild {{ background-size: cover; background-position: center 8%; position: relative; }}
+.w-split {{ display: grid; grid-template-columns: 1.45fr 1fr; min-height: 540px; margin-top: 0.8rem; }}
+.w-split .bild {{ background-size: cover; background-position: center 10%; position: relative; }}
 .w-split .text {{ background: {MIDNIGHT}; color: #FFFFFF; padding: 2.2rem 2.6rem; display: flex; flex-direction: column; justify-content: center; }}
 .w-kicker {{ font-size: 0.74rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8E9AC2; }}
 .w-marke {{ font-family: Georgia, "Times New Roman", serif; font-size: 5rem; line-height: 1; letter-spacing: 0.08em; margin: 0.6rem 0 0.4rem 0; color: #FFFFFF; }}
@@ -210,17 +210,17 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .w-kopf .w-t {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 2.2rem !important; line-height: 1.1; letter-spacing: -0.01em; margin: 0; color: {T['titel']} !important; }}
 .w-kopf > span {{ font-size: 0.86rem; color: {T['grau']}; text-align: right; max-width: 28rem; }}
 .w-promos {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }}
-.w-promo {{ display: grid; grid-template-columns: 1fr 1fr; min-height: 280px; color: #FFFFFF; }}
-.w-promo .t {{ padding: 1.8rem 1.7rem; display: flex; flex-direction: column; justify-content: center; }}
-.w-promo h3 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 2.1rem; line-height: 1.15; color: #CEECFF; margin: 0; }}
+.w-promo {{ display: grid; grid-template-columns: 0.8fr 1.3fr; min-height: 400px; color: #FFFFFF; }}
+.w-promo .t {{ padding: 1.6rem 1.4rem; display: flex; flex-direction: column; justify-content: center; }}
+.w-promo h3 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.85rem; line-height: 1.15; color: #CEECFF; margin: 0; }}
 .w-promo p {{ font-size: 0.94rem; line-height: 1.55; margin: 0; color: #FFFFFF; }}
-.w-promo .b {{ background-size: cover; background-position: center 25%; position: relative; }}
+.w-promo .b {{ background-size: cover; background-position: center 22%; position: relative; }}
 .w-badge {{ position: absolute; top: 1rem; right: 1rem; width: 6rem; height: 6rem; border-radius: 50%; background: #CEECFF; color: {MIDNIGHT}; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: Georgia, "Times New Roman", serif; line-height: 1.05; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25); }}
 .w-badge b {{ font-size: 1.35rem; font-weight: 400; display: block; }}
 .w-badge span {{ font-size: 0.95rem; font-style: italic; display: block; }}
 .w-cards {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }}
 .w-card {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; }}
-.w-card .b {{ height: 215px; background-size: cover; background-position: center; position: relative; }}
+.w-card .b {{ height: auto; aspect-ratio: 16 / 10; background-size: cover; background-position: center; position: relative; }}
 .w-card .b span {{ position: absolute; left: 0; bottom: 0; background: {MIDNIGHT}; color: #fff; padding: 0.3rem 0.9rem; font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; }}
 .w-card.slim .b {{ height: auto; aspect-ratio: 16 / 10; background-position: center 45%; }}
 .w-card.slim .i {{ padding: 0.7rem 1.1rem 0.8rem 1.1rem; }}
@@ -235,7 +235,7 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .w-logos div {{ background: #FFFFFF; border: 1px solid {T['rand']}; border-radius: 14px; display: flex; align-items: center; justify-content: center; height: 4.6rem; padding: 0.6rem 0.8rem; }}
 .w-logos img {{ max-height: 2.2rem; max-width: 100%; object-fit: contain; }}
 .review {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; padding: 1.1rem 1.2rem 1rem 1.2rem; display: flex; flex-direction: column; }}
-.review .foto {{ height: 250px; background-size: cover; background-position: center 24%; margin: -1.1rem -1.2rem 0.9rem -1.2rem; }}
+.review .foto {{ height: auto; aspect-ratio: 4 / 3; background-size: cover; background-position: center 22%; margin: -1.1rem -1.2rem 0.9rem -1.2rem; }}
 .review .kopfzeile {{ display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.7rem; }}
 .review .avatar {{ flex: none; width: 3.2rem; height: 3.2rem; border-radius: 50%; background: #CEECFF; color: {MIDNIGHT}; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background-size: cover; background-position: center; }}
 .review .wer b {{ display: block; color: {T['titel']}; font-size: 0.98rem; }}
