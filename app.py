@@ -68,7 +68,9 @@ st.set_page_config(page_title="White Spots", layout="wide", initial_sidebar_stat
 
 # Hell oder Dunkel aus dem Einstellungs-Popover (Zahnrad). Streamlit selbst kann das Theme nicht zur Laufzeit wechseln,
 # deshalb steuern wir Farben, Karte und Diagramme hier selbst.
-DUNKEL = st.session_state.get("darstellung", "Hell") == "Dunkel"
+DUNKEL = False  # Oberfläche ist immer hell. Nur die Karte ist dunkel, damit die White Spots leuchten.
+KARTE_DUNKEL = True
+FELD_DECKKRAFT = 0.62  # Felder sind durchscheinend, die Straßen darunter bleiben sichtbar
 T = {
     "bg": "#10131A" if DUNKEL else "#F2F3F5",
     "flaeche": "#181C26" if DUNKEL else "#FFFFFF",
@@ -88,7 +90,7 @@ T = {
     "hover": "#222B3D" if DUNKEL else "#F2F4F8",
     "schatten": "rgba(0, 0, 0, 0.45)" if DUNKEL else "rgba(11, 27, 77, 0.08)",
     "demo": "#FF8A82" if DUNKEL else "#B8322B",
-    "karte": "dark" if DUNKEL else "light",
+    "karte": "dark" if KARTE_DUNKEL else "light",
 }
 # Höhe des Arbeitsbereichs: ein Bildschirm abzüglich Kopfzeile, Titel, Bumper und Quelle
 KOERPER = "max(430px, calc(100vh - 235px))"
@@ -373,13 +375,13 @@ def lagebezeichnung(zeile, pois) -> str:
 def farbe(werte: pd.Series, deckkraft: float = 0.7) -> list:
     """Prozentrang 0 bis 100 auf die Farbrampe abbilden. Niedrige Werte sind durchsichtig, hohe kräftig,
     damit beim Hineinzoomen die Straßen unter schwachen Feldern sichtbar bleiben."""
-    rampe = RAMPE_DUNKEL if DUNKEL else RAMPE_HELL
+    rampe = RAMPE_DUNKEL if KARTE_DUNKEL else RAMPE_HELL
     t = (werte.fillna(0).clip(0, 100) / 100 * (len(rampe) - 1)).to_numpy()
     i = np.minimum(t.astype(int), len(rampe) - 2)
     f = (t - i)[:, None]
     a, b = np.array(rampe)[i], np.array(rampe)[i + 1]
     rgb = (a + (b - a) * f).astype(int)
-    alpha = (255 * deckkraft * (0.6 + 0.4 * t / (len(rampe) - 1))).astype(int)[:, None]
+    alpha = (255 * deckkraft * (0.3 + 0.7 * t / (len(rampe) - 1))).astype(int)[:, None]
     return np.hstack([rgb, alpha]).tolist()
 
 
@@ -441,9 +443,9 @@ def tabelle(df: pd.DataFrame, hoehe: int | None = None) -> str:
 
 def legende_html(ebene: str, stadt: str, nur_lagen: bool, senkrecht: bool) -> str:
     """Legende: Ebene, durchgehender Farbverlauf mit Skalenwerten und Schlüssel der Markierungen."""
-    rampe = RAMPE_DUNKEL if DUNKEL else RAMPE_HELL
+    rampe = RAMPE_DUNKEL if KARTE_DUNKEL else RAMPE_HELL
     verlauf = ", ".join(f"rgb({r}, {g}, {b})" for r, g, b in rampe)
-    nl = NICHT_LAGE_DUNKEL if DUNKEL else NICHT_LAGE_HELL
+    nl = NICHT_LAGE_DUNKEL if KARTE_DUNKEL else NICHT_LAGE_HELL
     schluessel = '<span class="leg-pin">1</span>Top 10'
     if nur_lagen:
         schluessel += f'<span class="leg-feld" style="background: rgb({nl[0]}, {nl[1]}, {nl[2]})"></span>keine Geschäftslage'
@@ -570,8 +572,8 @@ def pilotstandorte():
 
 
 # ---------------------------------------------------------------- Seitenleiste
-# Kopfzeile: Ansichten zum Durchklicken, Stadt, Optionen der Ansicht und Einstellungen. Keine Seitenleiste.
-nav, c_stadt, c_opt, zahnrad = st.columns([6.4, 1.7, 1.6, 1.9], vertical_alignment="center")
+# Kopfzeile: Ansichten zum Durchklicken, Stadt, und Optionen der Ansicht. Keine Seitenleiste.
+nav, c_stadt, c_opt = st.columns([7.4, 1.9, 1.9], vertical_alignment="center")
 with nav:
     gewaehlte_ansicht = st.segmented_control("Ansicht", ANSICHTEN, default="Konzept", key="ansicht",
                                              label_visibility="collapsed")
@@ -583,13 +585,8 @@ if df is None:
     st.error(f"Für {stadt_name} liegen keine Daten vor. Demo erzeugen mit: python analyse.py --demo")
     st.stop()
 pois = lade_pois(key)
-with zahnrad.popover("Einstellungen", icon=":material/settings:", use_container_width=True):
-    st.radio("Darstellung", ["Hell", "Dunkel"], key="darstellung", horizontal=True)
-    st.slider("Deckkraft der Felder", 0.2, 1.0, 0.9, 0.05, key="deckkraft",
-              help="Niedriger = Straßen und Gebäude darunter besser sichtbar, vor allem beim Hineinzoomen.")
-    st.toggle("Kommentarfeld zeigen", value=True, key="kommentar")
-deckkraft = st.session_state.get("deckkraft", 0.9)
-zeige_panel = st.session_state.get("kommentar", True)
+deckkraft = FELD_DECKKRAFT
+zeige_panel = True
 
 if "auswahl" not in st.session_state:
     st.session_state["auswahl"] = {}
@@ -600,7 +597,7 @@ top["lage"] = top.apply(lagebezeichnung, axis=1, pois=pois)
 n_konsens = int(top["konsens"].sum())
 optionen = {f"#{int(r.rang)} {r.lage}": r.h3 for r in top.itertuples()}
 
-# Optionen der gerade offenen Ansicht in einem Menü neben den Einstellungen
+# Optionen der gerade offenen Ansicht in einem Menü
 ebene, nur_lagen, zeige_portfolio, zeige_wettbewerber = "Score", True, False, False
 gewaehlt, wahl = [], None
 if ansicht != "Konzept" and ansicht != "Annahmen":
@@ -781,7 +778,7 @@ elif ansicht == "Karte":
     karte["farbe"] = farbe(werte, deckkraft)
     if nur_lagen:
         kein = karte["rang"].isna()
-        karte.loc[kein, "farbe"] = pd.Series([(NICHT_LAGE_DUNKEL if DUNKEL else NICHT_LAGE_HELL) + [int(110 * deckkraft)]] * int(kein.sum()),
+        karte.loc[kein, "farbe"] = pd.Series([(NICHT_LAGE_DUNKEL if KARTE_DUNKEL else NICHT_LAGE_HELL) + [int(90 * deckkraft / 0.62)]] * int(kein.sum()),
                                              index=karte.index[kein])
     karte["rang_txt"] = karte["rang"].apply(lambda r: "–" if pd.isna(r) else str(int(r)))
     karte["staerke"] = karte.apply(staerken_satz, axis=1)
@@ -798,7 +795,7 @@ elif ansicht == "Karte":
     nummern["text"] = nummern["rang"].astype(int).astype(str)
     schichten = [
         pdk.Layer("H3HexagonLayer", karte, get_hexagon="h3", get_fill_color="farbe",
-                  get_line_color=[255, 255, 255, 90], line_width_min_pixels=0.4,
+                  get_line_color=[255, 255, 255, 40], line_width_min_pixels=0.3,
                   extruded=False, opacity=1, pickable=True, id="hex"),
         pdk.Layer("H3HexagonLayer", top, get_hexagon="h3", get_fill_color=[0, 0, 0, 0],
                   get_line_color=CORAL_RGB + [255], stroked=True, filled=False,
@@ -813,8 +810,8 @@ elif ansicht == "Karte":
             st.info("Für diese Stadt liegen keine Wettbewerber-Daten vor.")
         else:
             schichten.append(pdk.Layer("ScatterplotLayer", wb, get_position=["lon", "lat"], get_radius=30, radius_min_pixels=3,
-                                       radius_max_pixels=9, get_fill_color=[255, 255, 255, 235] if DUNKEL else [11, 27, 77, 235],
-                                       get_line_color=[11, 27, 77, 255] if DUNKEL else [255, 255, 255, 255], stroked=True,
+                                       radius_max_pixels=9, get_fill_color=[255, 255, 255, 235] if KARTE_DUNKEL else [11, 27, 77, 235],
+                                       get_line_color=[11, 27, 77, 255] if KARTE_DUNKEL else [255, 255, 255, 255], stroked=True,
                                        line_width_min_pixels=1))
     if zeige_portfolio:
         port = lade_portfolio(key)
@@ -834,7 +831,7 @@ elif ansicht == "Karte":
     if auswahl is not None and auswahl in set(df["h3"]):  # gewähltes Feld hervorheben und Einzugsgebiet (400 m) zeigen
         zeile_a = df[df["h3"] == auswahl]
         schichten.append(pdk.Layer("H3HexagonLayer", zeile_a, get_hexagon="h3", get_fill_color=[0, 0, 0, 0],
-                                   get_line_color=[255, 255, 255, 255] if DUNKEL else [11, 27, 77, 255], stroked=True, filled=False,
+                                   get_line_color=[255, 255, 255, 255] if KARTE_DUNKEL else [11, 27, 77, 255], stroked=True, filled=False,
                                    line_width_min_pixels=5, extruded=False))
         schichten.append(pdk.Layer("ScatterplotLayer", zeile_a, get_position=["lon", "lat"], get_radius=400,
                                    get_fill_color=[44, 110, 242, 30], get_line_color=[44, 110, 242, 220], stroked=True,
