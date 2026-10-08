@@ -304,7 +304,7 @@ section[data-testid="stSidebar"] [data-testid^="stBaseButton"]:not([data-testid=
 [data-testid="stPopoverBody"] {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; }}
 [data-testid="stPopoverBody"] * {{ color: {T['text']}; }}
 /* Karte füllt den Arbeitsbereich */
-[data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stDeckGlJsonChart"], [data-testid="stDeckGlJsonChart"] > div, [data-testid="stDeckGlJsonChart"] iframe {{ height: calc({KOERPER} - 3.5rem) !important; max-height: calc({KOERPER} - 3.5rem) !important; min-height: 0 !important; overflow: hidden; }}
+[data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stDeckGlJsonChart"], [data-testid="stDeckGlJsonChart"] > div, [data-testid="stDeckGlJsonChart"] iframe {{ height: calc({KOERPER} - 3.1rem) !important; max-height: calc({KOERPER} - 3.1rem) !important; min-height: 0 !important; overflow: hidden; }}
 {CSS_DUNKEL if DUNKEL else ""}
 </style>
 """, unsafe_allow_html=True)
