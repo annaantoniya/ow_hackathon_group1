@@ -189,7 +189,7 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .w-intro-zeile .l {{ border-left: 1px solid {T['titel']}; display: flex; align-items: center; justify-content: center; }}
 .w-intro-zeile img {{ width: 4.4rem; height: 4.4rem; border-radius: 50%; }}
 .w-split {{ display: grid; grid-template-columns: 1.2fr 1fr; min-height: 440px; margin-top: 0.8rem; }}
-.w-split .bild {{ background-size: cover; background-position: center; position: relative; }}
+.w-split .bild {{ background-size: cover; background-position: center 8%; position: relative; }}
 .w-split .text {{ background: {MIDNIGHT}; color: #FFFFFF; padding: 2.2rem 2.6rem; display: flex; flex-direction: column; justify-content: center; }}
 .w-kicker {{ font-size: 0.74rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8E9AC2; }}
 .w-marke {{ font-family: Georgia, "Times New Roman", serif; font-size: 5rem; line-height: 1; letter-spacing: 0.08em; margin: 0.6rem 0 0.4rem 0; color: #FFFFFF; }}
