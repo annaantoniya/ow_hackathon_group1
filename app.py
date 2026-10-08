@@ -694,10 +694,10 @@ with nav:
     gewaehlte_ansicht = st.segmented_control("Ansicht", ANSICHTEN, default="Konzept", key="ansicht",
                                              label_visibility="collapsed")
 ansicht = gewaehlte_ansicht or "Konzept"  # ein Klick auf die aktive Ansicht würde sie abwählen
-if ansicht in ("Karte", "Analyse"):  # Stadtwahl nur dort, wo sie wirkt
+if ansicht == "Karte":  # Stadtwahl nur dort, wo sie wirkt
     stadt_name = c_stadt.selectbox("Stadt", list(STAEDTE), label_visibility="collapsed", key="stadt")
 else:
-    stadt_name = st.session_state.get("stadt", "München")
+    stadt_name = "München" if ansicht == "Analyse" else st.session_state.get("stadt", "München")  # Analyse zeigt München als Beispielstadt
 key = STAEDTE[stadt_name]
 df, ist_demo = lade_stadt(key)
 if df is None:
