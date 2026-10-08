@@ -167,7 +167,7 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .leg-ticks {{ margin-top: 0.25rem; font-variant-numeric: tabular-nums; }}
 .leg-enden {{ font-style: italic; }}
 .leg-key {{ display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: {T['text']}; flex-wrap: wrap; }}
-.leg-pin {{ display: inline-flex; width: 1.1rem; height: 1.1rem; align-items: center; justify-content: center; background: {BRIGHT}; color: #fff; font-size: 0.65rem; font-weight: 700; outline: 2px solid {CORAL}; outline-offset: 1px; margin-right: 0.1rem; }}
+.leg-pin {{ display: inline-flex; width: 1.1rem; height: 1.1rem; align-items: center; justify-content: center; background: {MIDNIGHT}; color: #fff; font-size: 0.65rem; font-weight: 700; outline: 2px solid {MIDNIGHT}; outline-offset: 1px; margin-right: 0.1rem; }}
 .leg-feld {{ display: inline-block; width: 1.1rem; height: 1.1rem; margin-left: 0.8rem; margin-right: 0.1rem; }}
 
 .tab {{ overflow: auto; border: 1px solid {T['rand']}; background: {T['flaeche']}; }}
@@ -541,7 +541,7 @@ def beige_flaeche():
 def laden_icon() -> dict:
     """Kleines Laden-Symbol (Markise, Schaufenster, Tür) als SVG. Kein Emoji."""
     svg = ('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
-           '<circle cx="64" cy="64" r="58" fill="#2C6EF2" stroke="#EF4E45" stroke-width="8"/>'
+           '<circle cx="64" cy="64" r="58" fill="#2C6EF2" stroke="#0B1B4D" stroke-width="8"/>'
            '<path d="M32 52 L40 34 H88 L96 52 Z" fill="#fff"/>'
            '<path d="M32 52 a8 8 0 0 0 16 0 a8 8 0 0 0 16 0 a8 8 0 0 0 16 0 a8 8 0 0 0 16 0" fill="#CEECFF"/>'
            '<rect x="38" y="62" width="52" height="30" fill="none" stroke="#fff" stroke-width="5"/>'
@@ -824,14 +824,14 @@ elif ansicht == "Karte":
     schichten = [
         beige_flaeche(),
         pdk.Layer("H3HexagonLayer", karte, get_hexagon="h3", get_fill_color="farbe",
-                  get_line_color=[0, 60, 160, 85] if not KARTE_DUNKEL else [255, 255, 255, 40], line_width_min_pixels=0.6,
+                  get_line_color=[11, 27, 77, 120] if not KARTE_DUNKEL else [255, 255, 255, 40], line_width_min_pixels=0.7,
                   extruded=False, opacity=1, pickable=True, id="hex"),
         pdk.Layer("H3HexagonLayer", top, get_hexagon="h3", get_fill_color=[0, 0, 0, 0],
-                  get_line_color=CORAL_RGB + [255], stroked=True, filled=False,
-                  line_width_min_pixels=4, extruded=False),
-        pdk.Layer("TextLayer", nummern, get_position=["lon", "lat"], get_text="text", get_size=15,
-                  get_color=[255, 255, 255, 255], get_background_color=[44, 110, 242, 255], background=True,
-                  background_padding=[5, 3]),
+                  get_line_color=[11, 27, 77, 255], stroked=True, filled=False,
+                  line_width_min_pixels=2.5, extruded=False),
+        pdk.Layer("TextLayer", nummern, get_position=["lon", "lat"], get_text="text", get_size=11,
+                  get_color=[255, 255, 255, 255], get_background_color=[11, 27, 77, 235], background=True,
+                  background_padding=[4, 2]),
     ]
     if zeige_wettbewerber:
         wb = lade_wettbewerber(key)
