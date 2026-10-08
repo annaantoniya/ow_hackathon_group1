@@ -268,7 +268,7 @@ Eine Zelle ist eine Geschäftslage, wenn in ihr und ihren sechs direkten Nachbar
 | `pr_score`, `pr_potenzial`, `pr_wettbewerbsfreiheit`, `pr_affinitaet` | Prozentränge von U, P, W und q je Stadt, Referenz sind die Geschäftslagen (`in_stadt` und `geschaeftslage`), Werte von 0 bis 100 |
 | `score_index` | U geteilt durch den Median von U über die Geschäftslagen der Stadt. 2,5 heißt 2,5-mal so stark wie eine typische Geschäftslage. Nur innerhalb einer Stadt vergleichbar |
 | `anteil_tag` | Tagesteil des Potenzials geteilt durch das gesamte Potenzial |
-| `profil` | `Mittagsstandort`, wenn `anteil_tag` über 1,5 mal theta liegt. `Feierabendstandort`, wenn er unter 0,5 mal theta liegt. Sonst `Ganztagsstandort`. |
+| `profil` | `Mittagsstandort`, wenn `anteil_tag` über dem 80-%-Quantil der Stadt liegt. `Feierabendstandort`, wenn er unter dem 20-%-Quantil liegt. Sonst `Ganztagsstandort`. |
 
 Die Schwellen 1,5 und 0,5 sind Setzungen und stehen in der Konfiguration.
 
@@ -395,14 +395,19 @@ Alle Werte stehen in `config.yaml` unter den Schlüsseln der ersten Spalte. Jede
 | Schlüssel | Startwert | Spanne | Bedeutung |
 |---|---|---|---|
 | `gamma` | 1,0 | 0,5 bis 1,5 | Wie stark Kaufkraft zählt |
-| `k_min`, `k_max` | 0,5 und 2,0 | – | Grenzen des Kaufkraftfaktors |
-| `theta` | 0,3 | 0,1 bis 0,5 | Anteil der Tagesbevölkerung an der Nachfrage |
-| `w_buero` | 1 | Faktor 0,5 bis 1,5 | Gewicht je Büro |
-| `w_hochschule` | 5 | Faktor 0,5 bis 1,5 | Gewicht je Hochschule |
-| `w_bahnhof` | 5 | Faktor 0,5 bis 1,5 | Gewicht je Bahnhof |
+| `k_quantil_unten`, `k_quantil_oben` | 0,05 und 0,95 | – | Kappung des Kaufkraftfaktors: `k_min` und `k_max` sind diese Quantile von Miete/Median in der jeweiligen Stadt |
+| `theta` | 0,4 | 0,2 bis 0,6 | Anteil der Tagesbevölkerung an der Nachfrage |
+| `w_buero` | 4 | Faktor 0,5 bis 1,5 | Gewicht je Büro |
+| `w_hochschule` | 3 | Faktor 0,5 bis 1,5 | Gewicht je Hochschule |
+| `w_bahnhof` | 2 | Faktor 0,5 bis 1,5 | Gewicht je Bahnhof |
 | `w_tram_ubahn` | 2 | Faktor 0,5 bis 1,5 | Gewicht je Tram- oder U-Bahn-Halt |
-| `w_bus` | 0,5 | Faktor 0,5 bis 1,5 | Gewicht je Bushaltestelle |
+| `w_bus` | 1 | Faktor 0,5 bis 1,5 | Gewicht je Bushaltestelle |
 | `q_min`, `q_max` | 0,5 und 1,5 | – | Grenzen des Affinitätsfaktors |
+| `h_milieu_m` | 250 | – | Halbwertsdistanz für Milieu-POIs |
+| `milieu_halbwert` | 2,0 | Faktor 0,5 bis 1,5 | Gewichtete Zahl von Milieu-POIs, bei der sich die Anziehung halbiert |
+| `m_min` | 0,2 | – | Untergrenze des Milieu-Malus |
+
+Die Frequenzgewichte folgen der Rangfolge Büro > Hochschule > Bahnhof = Tram/U-Bahn > Bus. Der Robustheitstest verteilt die gezogenen Gewichte so, dass diese Rangfolge in jedem Lauf gilt.
 
 ### Wettbewerb
 
@@ -421,7 +426,7 @@ Alle Werte stehen in `config.yaml` unter den Schlüsseln der ersten Spalte. Jede
 | Schlüssel | Startwert | Bedeutung |
 |---|---|---|
 | `n_min_geschaeftslage` | 5 | Mindestzahl POIs in Zelle und Nachbarn |
-| `profil_schwelle_hoch`, `profil_schwelle_tief` | 1,5 und 0,5 | Vielfache von theta für die Profilgrenzen |
+| `profil_quantil_hoch`, `profil_quantil_tief` | 0,8 und 0,2 | Quantile von `anteil_tag` in der Stadt für die Profilgrenzen |
 | `plausibilitaet_anteil` | 0,2 | Anteil der besten Zellen im Plausibilitätstest |
 | `top_n` | 10 | Länge der Rangliste |
 | `n_laeufe` | 1000 | Läufe im Robustheitstest, bei Zeitnot 200 |
