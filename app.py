@@ -840,9 +840,9 @@ elif ansicht == "Karte":
         pdk.Layer("H3HexagonLayer", top, get_hexagon="h3", get_fill_color=[0, 0, 0, 0],
                   get_line_color=[11, 27, 77, 255], stroked=True, filled=False,
                   line_width_min_pixels=2.5, extruded=False),
-        pdk.Layer("TextLayer", nummern, get_position=["lon", "lat"], get_text="text", get_size=11,
-                  get_color=[255, 255, 255, 255], get_background_color=[11, 27, 77, 235], background=True,
-                  background_padding=[4, 2]),
+        pdk.Layer("TextLayer", nummern, get_position=["lon", "lat"], get_text="text", get_size=16,
+                  get_color=[11, 27, 77, 255], outline_width=5, outline_color=[255, 255, 255, 255],
+                  font_settings={"sdf": True, "fontSize": 64, "buffer": 12}),
     ]
     if zeige_wettbewerber:
         wb = lade_wettbewerber(key)
