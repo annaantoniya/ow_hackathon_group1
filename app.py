@@ -198,7 +198,7 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .w-intro-zeile p {{ margin: 0; padding: 1.2rem 2rem 1.3rem 0; font-size: 1rem; line-height: 1.65; color: {T['text']}; max-width: 54rem; }}
 .w-intro-zeile .l {{ border-left: 1px solid {T['titel']}; display: flex; align-items: center; justify-content: center; }}
 .w-intro-zeile img {{ width: 4.4rem; height: 4.4rem; border-radius: 50%; }}
-.w-split {{ display: grid; grid-template-columns: 1.3fr 1fr; min-height: 580px; margin-top: 0.8rem; }}
+.w-split {{ display: grid; grid-template-columns: 1.3fr 1fr; min-height: 440px; margin-top: 0.8rem; }}
 .w-split .bild {{ background-size: cover; background-position: center top; position: relative; }}
 .w-split .text {{ background: {MIDNIGHT}; color: #FFFFFF; padding: 2.2rem 2.6rem; display: flex; flex-direction: column; justify-content: center; }}
 .w-kicker {{ font-size: 0.74rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8E9AC2; }}
@@ -220,7 +220,7 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .w-kopf .w-t {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 2.2rem !important; line-height: 1.1; letter-spacing: -0.01em; margin: 0; color: {T['titel']} !important; }}
 .w-kopf > span {{ font-size: 0.86rem; color: {T['grau']}; text-align: right; max-width: 28rem; }}
 .w-promos {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }}
-.w-promo {{ display: grid; grid-template-columns: 0.8fr 1.3fr; min-height: 500px; color: #FFFFFF; }}
+.w-promo {{ display: grid; grid-template-columns: 0.9fr 1.2fr; min-height: 330px; color: #FFFFFF; }}
 .w-promo .t {{ padding: 1.6rem 1.4rem; display: flex; flex-direction: column; justify-content: center; }}
 .w-promo h3 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.85rem; line-height: 1.15; color: #CEECFF; margin: 0; }}
 .w-promo p {{ font-size: 0.94rem; line-height: 1.55; margin: 0; color: #FFFFFF; }}
@@ -230,11 +230,12 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .w-badge span {{ font-size: 0.95rem; font-style: italic; display: block; }}
 .w-cards {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }}
 .w-card {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; }}
-.w-card .b {{ height: auto; aspect-ratio: 16 / 10; background-size: cover; background-position: center; position: relative; }}
+.w-card .b {{ height: auto; aspect-ratio: 21 / 8; background-size: cover; background-position: center; position: relative; }}
 .w-card .b span {{ position: absolute; left: 0; bottom: 0; background: {MIDNIGHT}; color: #fff; padding: 0.3rem 0.9rem; font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; }}
-.w-card.slim .b {{ height: auto; aspect-ratio: 16 / 10; background-position: center 45%; }}
-.w-card.slim .i {{ padding: 0.7rem 1.1rem 0.8rem 1.1rem; }}
-.w-card.slim h4 {{ margin: 0; font-size: 1.3rem; }}
+.w-cards.deli {{ grid-template-columns: repeat(6, 1fr); gap: 0.7rem; }}
+.w-card.slim .b {{ height: auto; aspect-ratio: 1 / 0.8; background-position: center 45%; }}
+.w-card.slim .i {{ padding: 0.55rem 0.8rem 0.65rem 0.8rem; }}
+.w-card.slim h4 {{ margin: 0; font-size: 1.05rem; }}
 .w-card .i {{ padding: 1rem 1.3rem 1.2rem 1.3rem; }}
 .w-card h4 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.45rem; line-height: 1.15; margin: 0 0 0.4rem 0; color: {T['titel']}; }}
 .w-card p {{ margin: 0; font-size: 0.88rem; line-height: 1.5; color: {T['text']}; }}
@@ -245,7 +246,7 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .w-logos div {{ background: #FFFFFF; border: 1px solid {T['rand']}; border-radius: 14px; display: flex; align-items: center; justify-content: center; height: 4.6rem; padding: 0.6rem 0.8rem; }}
 .w-logos img {{ max-height: 2.2rem; max-width: 100%; object-fit: contain; }}
 .review {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; padding: 1.1rem 1.2rem 1rem 1.2rem; display: flex; flex-direction: column; }}
-.review .foto {{ height: auto; aspect-ratio: 4 / 3; background-size: cover; background-position: center 22%; margin: -1.1rem -1.2rem 0.9rem -1.2rem; }}
+.review .foto {{ height: auto; aspect-ratio: 16 / 8; background-size: cover; background-position: center 20%; margin: -1.1rem -1.2rem 0.9rem -1.2rem; }}
 .review .kopfzeile {{ display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.7rem; }}
 .review .avatar {{ flex: none; width: 3.2rem; height: 3.2rem; border-radius: 50%; background: #CEECFF; color: {MIDNIGHT}; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background-size: cover; background-position: center; }}
 .review .wer b {{ display: block; color: {T['titel']}; font-size: 0.98rem; }}
@@ -744,8 +745,8 @@ if ansicht == "Konzept":
 <div class="w-kopf"><div class="w-t">Wertversprechen</div><span>Zwei Momente, ein Laden</span></div>
 <div class="w-promos">{wert}</div>
 
-<div class="w-kopf"><div class="w-t">Vom Deli-Tresen</div><span>Italienisch, mediterran, französisch, regional und gesund</span></div>
-<div class="w-cards">{sortiment}</div>
+<div class="w-kopf"><div class="w-t">Vom Deli-Tresen</div><span>Italienisch, mediterran, französisch, frisch zum Mitnehmen und gesund</span></div>
+<div class="w-cards deli">{sortiment}</div>
 
 <div class="w-kopf"><div class="w-t">Drei Städte, drei Hypothesen</div><span>Was jede Stadt dem Modell abverlangt</span></div>
 <div class="w-cards">{staedte}</div>

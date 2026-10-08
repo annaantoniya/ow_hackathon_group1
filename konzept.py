@@ -51,9 +51,7 @@ SORTIMENT = [
     ("Italienisch", "Belegte Ciabatta und Panini mit Hähnchen, Avocado, Schinken und Tomate, dazu frische Pasta und Antipasti.", "italienisch"),
     ("Mediterran", "Mezze, Hummus, griechischer Salat mit Feta, gegrilltes Gemüse, Oliven und Brot.", "mediterran"),
     ("Französische Bäckerei", "Pain au chocolat, Palmiers, Pastéis de nata und süße Pastries, frisch gebacken und auch abends noch da.", "franzoesisch"),
-    ("Regional, neu gedacht",
-     "Klassiker aus Frankfurt, München und Berlin mit neuem Dreh, zum Beispiel Grüne Soße mit neuen Kartoffeln oder "
-     "Leberkäs-Semmel mit eingelegtem Rettich. Lokal, aber nicht klischeehaft.", "regional"),
+    ("Frisch zum Mitnehmen", "Salate, Wraps, frisch gepresste Säfte und Joghurt-Becher aus der Kühltheke, für unterwegs.", "regional"),
     ("Bowls & Salate", "Açaí, Poke und saisonale Salate. Große vegane und vegetarische Auswahl.", "bowls"),
     ("Drinks & Cocktails", "Frische Cocktails, Mocktails und Limonaden mit Minze, Beeren und Zitrus, dazu Naturwein und Craft Beer zum Mitnehmen.", "drinks"),
 ]
