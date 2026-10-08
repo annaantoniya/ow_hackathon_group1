@@ -11,6 +11,7 @@ from html import escape
 from pathlib import Path
 
 import altair as alt
+import h3
 import numpy as np
 import pandas as pd
 import pydeck as pdk
@@ -153,6 +154,20 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .st-key-rk_karte, .st-key-rk_pilot {{ height: 0; position: relative; z-index: 30; overflow: visible; }}
 .st-key-rk_karte [data-testid="stHorizontalBlock"], .st-key-rk_pilot [data-testid="stHorizontalBlock"] {{ padding: 0.55rem 0 0 0.55rem; }}
 .st-key-rk_karte button, .st-key-rk_pilot button {{ min-height: 2.1rem; font-size: 0.82rem; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25); }}
+.vkopf {{ font-family: Georgia, serif; font-size: 1.25rem; color: {T['titel']}; margin: 1.5rem 0 0.5rem 0; border-bottom: 1px solid {T['rand']}; padding-bottom: 0.25rem; }}
+.vkopf .klein {{ font-family: Arial, sans-serif; font-size: 0.78rem; color: {T['grau']}; margin-left: 0.6rem; }}
+.hinweisbox {{ background: #CEECFF; color: {MIDNIGHT}; padding: 0.6rem 1rem; font-size: 0.86rem; margin: 0.2rem 0 0.4rem 0; }}
+.vb {{ height: 6px; background: {T['rand']}; margin-top: 0.3rem; }}
+.vb i {{ display: block; height: 6px; }}
+.pkt {{ display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; margin-right: 0.4rem; }}
+table.vgl th.sp {{ vertical-align: bottom; }}
+table.vgl th.sp small {{ display: block; font-weight: 400; color: {T['grau']}; font-size: 0.74rem; }}
+table.vgl th.sp.konsens {{ border-bottom: 3px solid {BRIGHT}; }}
+table.vgl td small {{ color: {T['grau']}; font-weight: 400; font-size: 0.74rem; }}
+.badge {{ display: inline-block; border: 1px solid {T['rand']}; padding: 0.1rem 0.5rem; font-size: 0.76rem; font-weight: 600; color: {T['grau']}; }}
+.badge.ja {{ background: {BRIGHT}; border-color: {BRIGHT}; color: #fff; }}
+.warn {{ display: inline-block; background: #FFF1D6; color: #7A4B00; padding: 0.05rem 0.45rem; font-size: 0.74rem; font-weight: 600; margin-right: 0.3rem; }}
+.info {{ display: inline-flex; width: 0.95rem; height: 0.95rem; border: 1px solid {T['grau']}; border-radius: 50%; align-items: center; justify-content: center; font: italic 0.65rem Georgia, serif; color: {T['grau']}; cursor: help; vertical-align: middle; }}
 .vgltab {{ overflow: visible; }}
 table.vgl {{ border-collapse: collapse; width: 100%; font-size: 0.88rem; }}
 table.vgl th {{ text-align: left; padding: 0.55rem 0.9rem; border-bottom: 2px solid {T['titel']}; color: {T['titel']}; font-size: 0.95rem; }}
@@ -693,6 +708,19 @@ def karten_leiste(callback_reset, key_: str):
     return voll
 
 
+def zum_vergleich(key_: str, h3_: str, stadt_label: str):
+    """Fügt das gewählte Feld der Karte dem Vergleich hinzu (höchstens fünf)."""
+    d_, _ = lade_stadt(key_)
+    z_ = d_[d_["h3"] == h3_].iloc[0]
+    marke = f"#{int(z_['rang'])}" if pd.notna(z_["rang"]) else "Feld"
+    label = f"{stadt_label} · {marke} {lagebezeichnung(z_, lade_pois(key_))}"
+    st.session_state.setdefault("vgl_extra", {})[label] = (key_, h3_)
+    aktuell = list(st.session_state.get("vgl_wahl", []))
+    if label not in aktuell and len(aktuell) < 5:
+        aktuell.append(label)
+    st.session_state["vgl_wahl"] = aktuell
+
+
 def zweispaltig():
     """Exhibit links, Kommentarfeld rechts. Ist das Kommentarfeld ausgeblendet, bekommt das Exhibit die volle Breite."""
     if zeige_panel:
@@ -905,7 +933,10 @@ elif ansicht == "Karte":
     if rechts is not None:
         with rechts:
             if auswahl is not None and auswahl in set(df["h3"]):
-                st.button("Auswahl aufheben", on_click=lambda: st.session_state["auswahl"].pop(key, None))
+                b1, b2 = st.columns(2)
+                b1.button("Auswahl aufheben", on_click=lambda: st.session_state["auswahl"].pop(key, None), use_container_width=True)
+                b2.button("Zum Vergleich", on_click=zum_vergleich, args=(key, auswahl, stadt_name), use_container_width=True,
+                          icon=":material/compare_arrows:", help="Fügt dieses Feld im Tab Vergleich hinzu")
                 z = df[df["h3"] == auswahl].iloc[0]
                 v = viertel(round(float(z["lat"]), 4), round(float(z["lon"]), 4))
                 titel_v = v[0] if v else f"{z['lat']:.4f}, {z['lon']:.4f}"
@@ -1033,73 +1064,236 @@ elif ansicht == "Rangliste":
 
 # --------------------------------------------------------------------- Vergleich
 elif ansicht == "Vergleich":
-    def echt(key_):  # nur Städte mit echten Daten, keine Demo
+    FARBEN_S = ["#0B1B4D", "#2C6EF2", "#009DE0", "#8DB4FF", "#9AA0AB"]
+
+    def echt(key_):  # nur Städte mit echten Daten
         return (DATA / f"{key_}_scored.csv").exists()
 
-    zeilen_s = []
-    for n_, k_ in STAEDTE.items():
-        if not echt(k_):
-            continue
-        d_, _ = lade_stadt(k_)
-        po_ = lade_pois(k_)
-        lagen = d_[d_["rang"].notna()]
-        spalten_w = [f"poi_{c}" for c in WETTBEWERB_DIREKT if f"poi_{c}" in d_.columns]
-        wb_n = float(d_[spalten_w].sum().sum())
-        ew = float(d_["einwohner"].sum())
-        t10 = d_[d_["rang"].notna()].nsmallest(TOP_N, "rang")
+    echte = {n_: k_ for n_, k_ in STAEDTE.items() if echt(k_)}
+    luecke_m = lade_json("luecke_modell.json") or {}
+
+    def f0(x): return f"{x:,.0f}".replace(",", ".")
+    def f1(x): return f"{x:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    def f2(x): return f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    @st.cache_data
+    def voll(key_):
+        return pd.read_csv(pfad(key_, f"{key_}_scored.csv")[0]).set_index("h3", drop=False)
+
+    @st.cache_data
+    def kandidaten():
+        """Top 10 je Stadt als Auswahlliste: Beschriftung -> (Schlüssel, h3)."""
+        out = {}
+        for n_, k_ in echte.items():
+            d_, _ = lade_stadt(k_)
+            po_ = lade_pois(k_)
+            for _, r in d_[d_["rang"].notna()].nsmallest(10, "rang").iterrows():
+                out[f"{n_} · #{int(r['rang'])} {lagebezeichnung(r, po_)}"] = (k_, r["h3"])
+        return out
+
+    optionen_v = dict(kandidaten())
+    optionen_v.update({lb: v for lb, v in st.session_state.get("vgl_extra", {}).items()})
+    standard = [lb for lb in optionen_v if lb.split(" · ")[1].startswith("#1 ")][:3]
+    wahl_v = st.multiselect("Standorte vergleichen (2 bis 5, auch aus verschiedenen Städten)", list(optionen_v),
+                            default=None if "vgl_wahl" in st.session_state else standard, max_selections=5, key="vgl_wahl")
+    sp = []  # gewählte Standorte mit allen Merkmalen
+    for lb in wahl_v:
+        k_, h_ = optionen_v[lb]
+        v_ = voll(k_)
+        z_ = v_.loc[h_]
+        lagen_ = v_[v_["in_stadt"] & v_["rang"].notna()]
+        median_m = v_.loc[v_["in_stadt"] & ~v_["miete_geschaetzt"].astype(bool), "miete_qm"].median()
+        port_ = lade_portfolio(k_)
+        in_port = (int(port_.loc[port_["h3"] == h_, "schritt"].iloc[0]) if port_ is not None and (port_["h3"] == h_).any() else None)
+        ring = v_.loc[v_.index.intersection(h3.grid_disk(h_, 1))]
         pl_ = lade_json(f"{k_}_plausibilitaet.json")
-        profil = lagen["profil"].value_counts(normalize=True) * 100
-        zeilen_s.append({
-            "stadt": n_, "key": k_, "zellen": len(d_), "lagen": len(lagen), "einwohner": ew,
-            "miete": d_.loc[~d_["miete_geschaetzt"].astype(bool), "miete_qm"].median(),
-            "wb": wb_n, "wb_100k": wb_n / ew * 100_000 if ew else float("nan"),
-            "mittag": profil.get("Mittagsstandort", 0.0), "abend": profil.get("Feierabendstandort", 0.0), "ganztag": profil.get("Ganztagsstandort", 0.0),
-            "konsens": int(t10["konsens"].sum()), "sicher": int((t10["top10_anteil"] >= 0.7).sum()),
-            "plaus": pl_["anteil_pois_in_top_zellen"] * 100 if pl_ else float("nan"),
-            "top3": [lagebezeichnung(r, po_) for _, r in t10.head(3).iterrows()],
-        })
-    kopf("Vergleich", "Die Städte im Vergleich: Frankfurt hat weniger Wettbewerb je Einwohner, München mehr Mittagsstandorte"
-         if len(zeilen_s) == 2 else "Die Städte im Vergleich")
-    if not zeilen_s:
-        st.info("Noch keine echten Stadtdaten vorhanden.")
-    else:
-        def f0(x): return f"{x:,.0f}".replace(",", ".")
-        def f1(x): return f"{x:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        kopf_html = "".join(f"<th>{escape(z['stadt'])}</th>" for z in zeilen_s) + ("<th>Berlin</th>" if "berlin" not in [z["key"] for z in zeilen_s] else "")
-        def zeile(titel, fn, hinweis=""):
-            zellen = "".join(f"<td>{fn(z)}</td>" for z in zeilen_s) + ("<td class='ph'>Daten folgen</td>" if "berlin" not in [z["key"] for z in zeilen_s] else "")
-            h = f"<small>{escape(hinweis)}</small>" if hinweis else ""
-            return f"<tr><th class='z'>{escape(titel)}{h}</th>{zellen}</tr>"
-        tab_html = (f"<table class='vgl'><thead><tr><th></th>{kopf_html}</tr></thead><tbody>"
-            + zeile("Einwohner im Raster", lambda z: f0(z["einwohner"]))
-            + zeile("Hexagone in der Stadt", lambda z: f0(z["zellen"]), "Geschäftslagen: " + ", ".join(f0(z["lagen"]) for z in zeilen_s))
-            + zeile("Median-Miete", lambda z: f"{f1(z['miete'])} €/m²", "Bestandsmiete, Zensus 2022")
-            + zeile("Direkte Wettbewerber", lambda z: f0(z["wb"]), "Deli, Feinkost, Bio, Markthalle, Wein, Pasta")
-            + zeile("Wettbewerber je 100.000 Einwohner", lambda z: f1(z["wb_100k"]))
-            + zeile("Konsens-Standorte in den Top 5", lambda z: f"{z['konsens']} von {TOP_N}", "Score und Angebotslücke beide im obersten Zehntel")
-            + zeile("Sichere Kandidaten in den Top 5", lambda z: f"{z['sicher']} von {TOP_N}", "mindestens 70 Prozent der Robustheitsläufe")
-            + zeile("Plausibilitätstest", lambda z: f"{f0(z['plaus'])} %", "Wettbewerber in den 20 % Zellen mit höchstem Potenzial, Zufall wären 20 %")
-            + zeile("Die drei besten Standorte", lambda z: "<br>".join(escape(t) for t in z["top3"]))
-            + "</tbody></table>")
-        links, rechts = st.columns([7.4, 3.6], gap="medium")
-        with links:
-            st.markdown(f"<div class='tab vgltab'>{tab_html}</div>", unsafe_allow_html=True)
-        with rechts:
-            exhibit_titel("Profil der Geschäftslagen", "Anteil in Prozent")
-            lang = pd.DataFrame([{"Stadt": z["stadt"], "Profil": p_, "Anteil": z[k_]} for z in zeilen_s
-                                 for p_, k_ in (("Mittagsstandort", "mittag"), ("Feierabendstandort", "abend"), ("Ganztagsstandort", "ganztag"))])
-            st.altair_chart(theme_chart(alt.Chart(lang).mark_bar().encode(
-                y=alt.Y("Stadt:N", title=None, axis=alt.Axis(labelFontSize=13)), x=alt.X("Anteil:Q", stack="normalize", title=None, axis=alt.Axis(format="%")),
-                color=alt.Color("Profil:N", scale=alt.Scale(domain=["Mittagsstandort", "Ganztagsstandort", "Feierabendstandort"],
-                                                           range=["#0B1B4D", "#2C6EF2", "#9DC1FF"]), legend=alt.Legend(orient="bottom", title=None)),
-                tooltip=["Stadt", "Profil", alt.Tooltip("Anteil:Q", format=".0f")]).properties(height=170)), width="stretch")
-            exhibit_titel("Wettbewerber je 100.000 Einwohner", "")
-            wbd = pd.DataFrame([{"Stadt": z["stadt"], "Wert": z["wb_100k"]} for z in zeilen_s])
-            st.altair_chart(theme_chart(alt.Chart(wbd).mark_bar(color="#2C6EF2").encode(
-                y=alt.Y("Stadt:N", title=None, axis=alt.Axis(labelFontSize=13)), x=alt.X("Wert:Q", title=None),
-                tooltip=["Stadt", alt.Tooltip("Wert:Q", format=".1f")]).properties(height=110)), width="stretch")
-        bumper("Beide Städte unterscheiden sich in Kaufkraft und Pendlerstruktur, deshalb bewertet das Modell jede Stadt für sich.")
-        quelle(QUELLE + " Berlin folgt, sobald die Daten vorliegen.")
+        sp.append({"label": lb, "stadt": lb.split(" · ")[0], "key": k_, "z": z_, "n_lagen": len(lagen_), "median_m": median_m,
+                   "port": in_port, "ring": ring, "plaus": pl_["anteil_pois_in_top_zellen"] if pl_ else None})
+    gemischt = len({x["stadt"] for x in sp}) > 1
+
+    def tip(txt): return f' title="{escape(txt)}"'
+    def balken(v, farbe="#2C6EF2"):
+        return f'<div class="vb"><i style="width:{max(0, min(100, v)):.0f}%; background:{farbe}"></i></div>'
+
+    def vtabelle(zeilen):
+        """Zeilen: (Titel, Lesart, [Zellen-HTML je Standort]). Kopf: Standort mit Farbpunkt, Konsens und Portfolio hervorgehoben."""
+        kopf_ = "".join(
+            f"<th class='sp{' konsens' if x['z']['konsens'] else ''}'><span class='pkt' style='background:{FARBEN_S[i]}'></span>"
+            f"<b>{escape(x['stadt'])}</b><small>{escape(x['label'].split(' · ', 1)[1])}</small></th>" for i, x in enumerate(sp))
+        koerper = "".join(
+            f"<tr><th class='z'{tip(lesart)}>{escape(titel)} <span class='info'>i</span></th>" + "".join(f"<td>{c}</td>" for c in zellen) + "</tr>"
+            for titel, lesart, zellen in zeilen)
+        return f"<table class='vgl'><thead><tr><th></th>{kopf_}</tr></thead><tbody>{koerper}</tbody></table>"
+
+    def lang(spalten):
+        return pd.DataFrame([{"Standort": f"{x['stadt']}: {x['label'].split(' · ', 1)[1]}", **{k: float(x['z'][c]) for k, c in spalten.items()}} for x in sp])
+
+    t_sp, t_st = st.tabs(["Standorte", "Städte"])
+
+    with t_sp:
+        if len(sp) < 2:
+            st.info("Wähle mindestens zwei Standorte aus. Mit Klick auf ein Feld in der Karte und „Zum Vergleich hinzufügen“ kommen weitere dazu.")
+        else:
+            kopf("Vergleich", "Warum ist Standort A besser oder schlechter als B, und wie sicher ist das?")
+            if gemischt:
+                st.markdown(f"<div class='hinweisbox'>Verschiedene Städte: Das Modell normiert jede Stadt für sich. Deshalb stehen hier nur Prozentränge, Anteile "
+                            f"und Läden-Zahlen. Rohwerte wie Score oder Potenzial und der Rang sind nur innerhalb einer Stadt vergleichbar.</div>", unsafe_allow_html=True)
+            # 1 Gesamturteil
+            st.markdown("<div class='vkopf'>1 · Gesamturteil</div>", unsafe_allow_html=True)
+            st.markdown(vtabelle([
+                ("Score-Perzentil", "Sicht A: Wie viel passende Nachfrage ein neuer Laden hier gewinnen würde, verglichen mit den anderen Zellen der Stadt.",
+                 [f"<b>{x['z']['pr_score']:.0f}</b>{balken(x['z']['pr_score'], FARBEN_S[i])}" for i, x in enumerate(sp)]),
+                ("Lücken-Perzentil", "Sicht B: Wie viel weniger Läden es hier gibt, als das Umfeld erwarten lässt.",
+                 [f"<b>{x['z']['pr_luecke']:.0f}</b>{balken(x['z']['pr_luecke'], FARBEN_S[i])}" for i, x in enumerate(sp)]),
+                ("Konsens", "Score und Lücke liegen beide im obersten Zehntel (mindestens 90). Das sind die stärksten Kandidaten.",
+                 ["<span class='badge ja'>Konsens</span>" if x["z"]["konsens"] else "<span class='badge'>kein Konsens</span>" for x in sp]),
+                ("Rang in der Stadt", "Platz nach Score unter allen Geschäftslagen der eigenen Stadt. Nicht über Städte vergleichbar.",
+                 [f"#{int(x['z']['rang'])}<small> von {f0(x['n_lagen'])} Geschäftslagen</small>" if pd.notna(x["z"]["rang"]) else "keine Geschäftslage" for x in sp]),
+                ("Im Portfolio", "Teil der besten 5er-Kombination der Stadt, die sich gegenseitig möglichst wenig Kunden wegnimmt.",
+                 [f"<span class='badge ja'>Schritt {x['port']}</span>" if x["port"] else "–" for x in sp]),
+            ]), unsafe_allow_html=True)
+
+            # 2 Stabilität
+            st.markdown("<div class='vkopf'>2 · Stabilität: Wie sicher ist das Urteil?</div>", unsafe_allow_html=True)
+            c1, c2 = st.columns([1.2, 1], gap="medium")
+            with c1:
+                st.markdown(vtabelle([
+                    ("In den Top 10", "Anteil der Robustheitsläufe, in denen die Zelle unter den zehn besten der Stadt lag, wenn alle Setzungen zufällig variiert werden.",
+                     [f"<b>{x['z']['top10_anteil'] * 100:.0f} %</b>{balken(x['z']['top10_anteil'] * 100, FARBEN_S[i])}" for i, x in enumerate(sp)]),
+                    ("Rangspanne", "Median des Rangs über alle Läufe, in Klammern die mittleren 80 Prozent (10. bis 90. Perzentil).",
+                     [f"#{int(x['z']['rang_median'])}<small> (#{int(x['z']['rang_p10'])} bis #{int(x['z']['rang_p90'])})</small>" for x in sp]),
+                ]), unsafe_allow_html=True)
+                st.caption("Top 10 ist in Berlin strenger als in Frankfurt, weil Berlin mehr Zellen hat.")
+            with c2:
+                exhibit_titel("Rangspanne", "Rang als Anteil der Geschäftslagen in Prozent, links ist besser")
+                rd = pd.DataFrame([{"Standort": f"{x['stadt']}: {x['label'].split(' · ', 1)[1]}",
+                                    "p10": x["z"]["rang_p10"] / x["n_lagen"] * 100, "med": x["z"]["rang_median"] / x["n_lagen"] * 100,
+                                    "p90": x["z"]["rang_p90"] / x["n_lagen"] * 100} for x in sp])
+                basis = alt.Chart(rd).encode(y=alt.Y("Standort:N", title=None, axis=alt.Axis(labelLimit=240)))
+                st.altair_chart(theme_chart((basis.mark_rule(strokeWidth=5, color="#8DB4FF").encode(x=alt.X("p10:Q", title=None), x2="p90:Q")
+                                             + basis.mark_point(filled=True, size=90, color="#0B1B4D").encode(x="med:Q")).properties(height=24 * len(sp) + 40)),
+                                width="stretch")
+
+            # 3 Zerlegung Sicht A
+            st.markdown("<div class='vkopf'>3 · Warum der Score so ist</div>", unsafe_allow_html=True)
+            c1, c2 = st.columns([1, 1.2], gap="medium")
+            with c1:
+                achsen = {"Potenzial": "pr_potenzial", "Wettbewerbsfreiheit": "pr_wettbewerbsfreiheit", "Affinität": "pr_affinitaet", "Score": "pr_score"}
+                ld = lang(achsen).melt("Standort", var_name="Achse", value_name="Prozentrang")
+                st.altair_chart(theme_chart(alt.Chart(ld).mark_bar().encode(
+                    y=alt.Y("Achse:N", sort=list(achsen), title=None, axis=alt.Axis(labelLimit=220)), yOffset=alt.YOffset("Standort:N"),
+                    x=alt.X("Prozentrang:Q", scale=alt.Scale(domain=[0, 100]), title="Prozentrang in der eigenen Stadt"),
+                    color=alt.Color("Standort:N", scale=alt.Scale(range=FARBEN_S[:len(sp)]), legend=None),
+                    tooltip=["Standort", "Achse", alt.Tooltip("Prozentrang:Q", format=".0f")]).properties(height=190)), width="stretch")
+            with c2:
+                st.markdown(vtabelle([
+                    ("Wettbewerbsfreiheit", "Anteil des Potenzials, den die Konkurrenz im Umfeld übrig lässt (1 = keine Konkurrenz).",
+                     [f"{x['z']['w'] * 100:.0f} %" for x in sp]),
+                    ("Milieu-Malus", "Abzug für Spielhallen und Rotlicht im Umfeld. 1 = kein Abzug, 0,2 = maximaler Abzug.",
+                     [f"{f2(x['z']['m_milieu'])}" + (" <span class='warn'>Abzug</span>" if x["z"]["m_milieu"] < 0.9 else "") for x in sp]),
+                    ("Profil", "Zu welcher Tageszeit der Standort vor allem trägt. Mittag eher Deli, Feierabend eher Markt.",
+                     [f"{escape(str(x['z']['profil']))}<small> · Tagesanteil {x['z']['anteil_tag'] * 100:.0f} %</small>" for x in sp]),
+                ]), unsafe_allow_html=True)
+
+            # 4 Zerlegung Sicht B
+            koef = luecke_m.get("koeffizienten", {})
+            se = luecke_m.get("standardfehler", {})
+            ktxt = "; ".join(f"{k} {koef[k]:+.2f} (±{se.get(k, 0):.2f})" for k in ("einwohner", "kaufkraft", "alter", "affinitaet", "tag") if k in koef)
+            st.markdown(f"<div class='vkopf'>4 · Warum die Lücke so ist <span class='info' title='Koeffizienten (Standardfehler): {escape(ktxt)}. Der Koeffizient für Alter ist negativ. Die Standardfehler sind zu klein, weil Nachbarzellen nicht unabhängig sind.'>i</span></div>",
+                        unsafe_allow_html=True)
+            c1, c2 = st.columns([1, 1.2], gap="medium")
+            with c1:
+                st.markdown(vtabelle([
+                    ("Läden vorhanden", "Zahl direkter Wettbewerber (Deli, Feinkost, Bio, Markthalle, Wein, Pasta) in der Zelle.",
+                     [f"{x['z']['y_direkt']:.0f}" for x in sp]),
+                    ("Läden erwartet", "Zahl, die das Modell aus den fünf Merkmalen der Zelle erwartet.",
+                     [f"{x['z']['y_erwartet']:.1f}".replace(".", ",") for x in sp]),
+                    ("Lücke im Umfeld", "Erwartete minus vorhandene Läden, über die Laufweite geglättet. Größer als 0 heißt unterversorgt.",
+                     [f"{x['z']['luecke']:+.2f}".replace(".", ",") + (" <span class='badge ja'>unterversorgt</span>" if x["z"]["luecke"] > 0 else "") for x in sp]),
+                ]), unsafe_allow_html=True)
+            with c2:
+                treiber = {"Einwohner": "beitrag_einwohner", "Kaufkraft": "beitrag_kaufkraft", "Alter": "beitrag_alter", "Affinität": "beitrag_affinitaet", "Tag": "beitrag_tag"}
+                td = lang(treiber).melt("Standort", var_name="Treiber", value_name="Beitrag")
+                st.altair_chart(theme_chart(alt.Chart(td).mark_bar().encode(
+                    y=alt.Y("Treiber:N", sort=list(treiber), title=None), yOffset=alt.YOffset("Standort:N"),
+                    x=alt.X("Beitrag:Q", title="Beitrag zur erwarteten Ladenzahl (log-Skala, addiert sich)"),
+                    color=alt.Color("Standort:N", scale=alt.Scale(range=FARBEN_S[:len(sp)]), legend=None),
+                    tooltip=["Standort", "Treiber", alt.Tooltip("Beitrag:Q", format="+.2f")]).properties(height=210)), width="stretch")
+
+            # 5 Steckbrief
+            st.markdown("<div class='vkopf'>5 · Umfeld-Steckbrief <span class='klein'>Kontext, keine Bewertung</span></div>", unsafe_allow_html=True)
+            def ringsumme(x, cols): return int(x["ring"][[c for c in cols if c in x["ring"].columns]].fillna(0).sum().sum())
+            direkt_c = [f"poi_{c}" for c in WETTBEWERB_DIREKT]
+            breit_c = ["poi_supermarkt", "poi_obst_gemuese", "poi_metzger", "poi_baecker", "poi_fisch"]
+            st.markdown(vtabelle([
+                ("Einwohner", "Einwohner in der Zelle (rund 0,1 km²).", [f0(x["z"]["einwohner"]) for x in sp]),
+                ("Anteil 20 bis 49 Jahre", "Kernzielgruppe der Anwohner.", [f"{x['z']['anteil_20_49'] * 100:.0f} %" for x in sp]),
+                ("Kleine Haushalte", "Anteil der Haushalte mit einer bis drei Personen.", [f"{x['z']['anteil_hh_1_3'] * 100:.0f} %" for x in sp]),
+                ("Miete relativ zur Stadt", "Nettokaltmiete der Zelle geteilt durch den Median der eigenen Stadt. Absolute Mieten sind zwischen Städten nicht vergleichbar.",
+                 [(f"{x['z']['miete_qm'] / x['median_m']:.2f}".replace(".", ",") + " × Median") if pd.notna(x["z"]["miete_qm"]) else "–" for x in sp]),
+                ("Direkte Wettbewerber", "Deli, Feinkost, Bio-Markt, Markthalle, Wein, Reformhaus und Pasta in der Zelle und den sechs Nachbarzellen.",
+                 [f"{ringsumme(x, direkt_c)}<small> Zelle + Ring 1</small>" for x in sp]),
+                ("Breite Wettbewerber", "Supermarkt, Obst und Gemüse, Metzger, Bäcker und Fisch in der Zelle und den sechs Nachbarzellen.",
+                 [f"{ringsumme(x, breit_c)}<small> Zelle + Ring 1</small>" for x in sp]),
+            ]), unsafe_allow_html=True)
+
+            # 6 Datenqualität
+            st.markdown("<div class='vkopf'>6 · Datenqualität</div>", unsafe_allow_html=True)
+            st.markdown(vtabelle([
+                ("Geschätzte Werte", "Miete oder Alter stammen aus Nachbarzellen, weil die Zensus-Zelle keinen Wert hat.",
+                 [(" ".join(t for t, f in (("<span class='warn'>Miete geschätzt</span>", x["z"]["miete_geschaetzt"]),
+                                          ("<span class='warn'>Alter geschätzt</span>", x["z"]["alter_geschaetzt"])) if bool(f)) or "keine") for x in sp]),
+                ("Plausibilität der Stadt", "Anteil der heutigen direkten Wettbewerber in den 20 Prozent Zellen mit dem höchsten Potenzial. Zufall wären 20 Prozent.",
+                 [f"{x['plaus'] * 100:.0f} %<small> statt 20 %</small>" if x["plaus"] is not None else "–" for x in sp]),
+            ]), unsafe_allow_html=True)
+            quelle(QUELLE)
+
+    with t_st:
+        zeilen_s = []
+        for n_, k_ in echte.items():
+            d_, _ = lade_stadt(k_)
+            lagen = d_[d_["rang"].notna()]
+            spalten_w = [f"poi_{c}" for c in WETTBEWERB_DIREKT if f"poi_{c}" in d_.columns]
+            wb_n = float(d_[spalten_w].sum().sum())
+            ew = float(d_["einwohner"].sum())
+            pl_ = lade_json(f"{k_}_plausibilitaet.json")
+            profil = lagen["profil"].value_counts(normalize=True) * 100
+            zeilen_s.append({
+                "stadt": n_, "zellen": len(d_), "lagen": len(lagen), "einwohner": ew,
+                "miete": d_.loc[~d_["miete_geschaetzt"].astype(bool), "miete_qm"].median(), "wb_100k": wb_n / ew * 100_000 if ew else float("nan"),
+                "mittag": profil.get("Mittagsstandort", 0.0), "abend": profil.get("Feierabendstandort", 0.0), "ganztag": profil.get("Ganztagsstandort", 0.0),
+                "konsens": int(lagen["konsens"].sum()), "plaus": pl_["anteil_pois_in_top_zellen"] * 100 if pl_ else float("nan"),
+                "effekt": 0.0 if k_ == "muenchen" else luecke_m.get("koeffizienten", {}).get(f"stadt_{k_}"),
+            })
+        kopf("Vergleich", "Die Städte im Vergleich")
+        if zeilen_s:
+            kh = "".join(f"<th>{escape(z['stadt'])}</th>" for z in zeilen_s)
+            def zl(titel, fn, hinweis=""):
+                h = f"<small>{escape(hinweis)}</small>" if hinweis else ""
+                return f"<tr><th class='z'>{escape(titel)}{h}</th>" + "".join(f"<td>{fn(z)}</td>" for z in zeilen_s) + "</tr>"
+            tab_html = (f"<table class='vgl'><thead><tr><th></th>{kh}</tr></thead><tbody>"
+                        + zl("Konsens-Standorte", lambda z: f0(z["konsens"]), "Score und Lücke beide im obersten Zehntel")
+                        + zl("Geschäftslagen", lambda z: f0(z["lagen"]), "von " + ", ".join(f0(z["zellen"]) for z in zeilen_s) + " Zellen")
+                        + zl("Median-Miete", lambda z: f"{f1(z['miete'])} €/m²", "Bestandsmiete, Zensus 2022")
+                        + zl("Wettbewerber je 100.000 Einwohner", lambda z: f1(z["wb_100k"]), "direkte Wettbewerber")
+                        + zl("Plausibilität", lambda z: f"{f0(z['plaus'])} %", "Wettbewerber in den 20 % Zellen mit höchstem Potenzial, Zufall wären 20 %")
+                        + zl("Stadteffekt der Lücke", lambda z: "Referenz" if z["effekt"] == 0.0 else (f"{z['effekt']:+.2f}".replace(".", ",") if z["effekt"] is not None else "–"),
+                             "log-Skala gegenüber München. Negativ heißt: weniger Läden bei gleichen Merkmalen")
+                        + "</tbody></table>")
+            links, rechts = st.columns([7, 4], gap="medium")
+            with links:
+                st.markdown(f"<div class='tab vgltab'>{tab_html}</div>", unsafe_allow_html=True)
+            with rechts:
+                exhibit_titel("Profil der Geschäftslagen", "Anteil in Prozent")
+                lg = pd.DataFrame([{"Stadt": z["stadt"], "Profil": p_, "Anteil": z[k_]} for z in zeilen_s
+                                   for p_, k_ in (("Mittagsstandort", "mittag"), ("Ganztagsstandort", "ganztag"), ("Feierabendstandort", "abend"))])
+                st.altair_chart(theme_chart(alt.Chart(lg).mark_bar().encode(
+                    y=alt.Y("Stadt:N", title=None), x=alt.X("Anteil:Q", stack="normalize", title=None, axis=alt.Axis(format="%")),
+                    color=alt.Color("Profil:N", scale=alt.Scale(domain=["Mittagsstandort", "Ganztagsstandort", "Feierabendstandort"], range=["#0B1B4D", "#2C6EF2", "#9DC1FF"]),
+                                    legend=alt.Legend(orient="bottom", title=None)),
+                    tooltip=["Stadt", "Profil", alt.Tooltip("Anteil:Q", format=".0f")]).properties(height=150)), width="stretch")
+            bumper("Jede Stadt wird für sich bewertet, weil sich Kaufkraft und Pendlerstruktur stark unterscheiden.")
+            quelle(QUELLE)
 
 # ---------------------------------------------------------------------- Erklärung
 elif ansicht == "Erklärung":
