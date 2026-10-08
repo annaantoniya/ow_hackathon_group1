@@ -145,6 +145,9 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 
 .bumper {{ background: {T['bumper_bg']}; border: 1px solid {T['bumper_rand']}; border-left: 4px solid {T['akzent']}; margin-top: 0.35rem; padding: 0.55rem 1rem; font-weight: 700; font-size: 0.92rem; color: {T['titel']}; }}
 .quelle {{ font-size: 0.72rem; color: {T['grau']}; margin-top: 0.3rem; }}
+.st-key-rk_karte, .st-key-rk_pilot {{ height: 0; position: relative; z-index: 30; overflow: visible; }}
+.st-key-rk_karte [data-testid="stHorizontalBlock"], .st-key-rk_pilot [data-testid="stHorizontalBlock"] {{ padding: 0.55rem 0 0 0.55rem; }}
+.st-key-rk_karte button, .st-key-rk_pilot button {{ min-height: 2.1rem; font-size: 0.82rem; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25); }}
 .statraster {{ display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 0.9rem; }}
 .stat {{ border-top: 1px solid {T['rand']}; padding-top: 0.35rem; }}
 .stat span {{ display: block; font-size: 0.72rem; color: {T['grau']}; }}
@@ -242,9 +245,8 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .frage {{ border-left: 4px solid {T['akzent']}; padding: 0.2rem 0 0.2rem 1rem; margin: 1.4rem 0 0.8rem 0; font-weight: 700; color: {T['titel']}; font-size: 1.05rem; line-height: 1.4; max-width: 56rem; }}
 .frage small {{ display: block; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.68rem; color: {T['akzent']}; margin-bottom: 0.2rem; }}
 .fuss {{ margin-top: 1.4rem; font-size: 0.72rem; color: {T['grau']}; line-height: 1.5; }}
-.st-key-pilotkarte [data-testid="stDeckGlJsonChart"], .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] iframe {{ height: 520px !important; }}
+.st-key-pilotkarte [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stDeckGlJsonChart"], .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] iframe {{ height: 520px !important; }}
 .st-key-pilotkarte .panel {{ height: 520px; }}
-.st-key-pilotkarte [data-testid="stDeckGlJsonChart"] button, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] .deck-widget {{ display: none !important; }}
 
 /* Kopfzeile: Ansichten zum Durchklicken, Linie unter der ganzen Leiste */
 [data-testid="stElementContainer"]:has([data-testid="stButtonGroup"]) {{ width: 100% !important; }}
@@ -258,7 +260,7 @@ section[data-testid="stSidebar"] [data-testid^="stBaseButton"]:not([data-testid=
 [data-testid="stPopoverBody"] {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; }}
 [data-testid="stPopoverBody"] * {{ color: {T['text']}; }}
 /* Karte füllt den Arbeitsbereich */
-[data-testid="stDeckGlJsonChart"], [data-testid="stDeckGlJsonChart"] > div, [data-testid="stDeckGlJsonChart"] iframe {{ height: {KOERPER} !important; min-height: 0 !important; }}
+[data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stDeckGlJsonChart"], [data-testid="stDeckGlJsonChart"] > div, [data-testid="stDeckGlJsonChart"] iframe {{ height: calc({KOERPER} - 3.5rem) !important; max-height: calc({KOERPER} - 3.5rem) !important; min-height: 0 !important; overflow: hidden; }}
 {CSS_DUNKEL if DUNKEL else ""}
 </style>
 """, unsafe_allow_html=True)
@@ -487,6 +489,17 @@ def flaeche(schluessel: str, klasse: str, extra: str = "") -> str:
     return f'<div class="{klasse} fallback">{extra}<span>Bild folgt</span></div>'
 
 
+def laden_icon() -> dict:
+    """Kleines Laden-Symbol (Markise, Schaufenster, Tür) als SVG. Kein Emoji."""
+    svg = ('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
+           '<circle cx="64" cy="64" r="58" fill="#2C6EF2" stroke="#EF4E45" stroke-width="8"/>'
+           '<path d="M32 52 L40 34 H88 L96 52 Z" fill="#fff"/>'
+           '<path d="M32 52 a8 8 0 0 0 16 0 a8 8 0 0 0 16 0 a8 8 0 0 0 16 0 a8 8 0 0 0 16 0" fill="#CEECFF"/>'
+           '<rect x="38" y="62" width="52" height="30" fill="none" stroke="#fff" stroke-width="5"/>'
+           '<rect x="56" y="70" width="16" height="22" fill="#fff"/></svg>')
+    return {"url": "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode(), "width": 128, "height": 128, "anchorY": 64}
+
+
 ICONS = {
     "phone": '<rect x="7" y="2.5" width="10" height="19" rx="2.2"/><line x1="11" y1="18" x2="13" y2="18"/>',
     "clock": '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>',
@@ -552,6 +565,11 @@ with nav:
     gewaehlte_ansicht = st.segmented_control("Ansicht", ANSICHTEN, default="Konzept", key="ansicht",
                                              label_visibility="collapsed")
 ansicht = gewaehlte_ansicht or "Konzept"  # ein Klick auf die aktive Ansicht würde sie abwählen
+if ansicht == "Konzept":  # die Startseite braucht keine Seitenleiste
+    st.markdown("""<style>
+    section[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], [data-testid="stExpandSidebarButton"],
+    [data-testid="stSidebarCollapseButton"] { display: none !important; }
+    </style>""", unsafe_allow_html=True)
 with zahnrad.popover("Einstellungen", icon=":material/settings:", use_container_width=True):
     st.radio("Darstellung", ["Hell", "Dunkel"], key="darstellung", horizontal=True)
     st.slider("Deckkraft der Felder", 0.2, 1.0, 0.9, 0.05, key="deckkraft",
@@ -587,6 +605,27 @@ elif ansicht == "Rangliste":
                                                      st.session_state.update(ansicht="Karte")))
 
 QUELLE = "Quellen: OpenStreetMap-Mitwirkende, Statistisches Bundesamt (Zensus 2022)."
+
+
+def karten_leiste(callback_reset, key_: str):
+    """Leiste oben links auf der Karte: Ansicht zurücksetzen und Vollbild. Gilt für beide Karten gleich.
+    Der Zoom steckt in der Karte selbst (Plus und Minus oben rechts). Im Vollbild bleiben alle drei bedienbar."""
+    vb_key = f"vb_{key_}"
+    voll = st.session_state.get(vb_key, False)
+    with st.container(key=f"rk_{key_}"):  # liegt als Overlay oben links auf der Karte, damit das Layout nicht verrutscht
+        c1, c2, _ = st.columns([1.5, 1.2, 2.2])
+        c1.button("Ansicht zurücksetzen", on_click=callback_reset, key=f"reset_{key_}", icon=":material/restart_alt:", use_container_width=True)
+        c2.button("Vollbild beenden" if voll else "Vollbild", on_click=lambda: st.session_state.update({vb_key: not voll}),
+                  key=f"vbknopf_{key_}", icon=":material/close_fullscreen:" if voll else ":material/fullscreen:", use_container_width=True)
+    if voll:  # Karte füllt die Seite, Seitenleiste ausgeblendet
+        st.markdown("""<style>
+        section[data-testid="stSidebar"], [data-testid="stExpandSidebarButton"] { display: none !important; }
+        [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stDeckGlJsonChart"],
+        [data-testid="stDeckGlJsonChart"] > div, [data-testid="stDeckGlJsonChart"] iframe,
+        .st-key-pilotkarte [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stDeckGlJsonChart"],
+        .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] iframe { height: calc(100vh - 17rem) !important; max-height: calc(100vh - 17rem) !important; }
+        </style>""", unsafe_allow_html=True)
+    return voll
 
 
 def zweispaltig():
@@ -672,6 +711,7 @@ if ansicht == "Konzept":
     if pil is not None and len(pil):
         sicht = pil[pil["nr"] == 1].reset_index(drop=True)  # je Stadt der beste White Spot
         sicht["text"] = ""
+        sicht["icon_data"] = [laden_icon()] * len(sicht)
         st.session_state.setdefault("pilot_stadt", None)   # None = ganz Deutschland, sonst Name der herangezoomten Stadt
         st.session_state.setdefault("pilot_zaehler", 0)
         fokus = st.session_state["pilot_stadt"]
@@ -681,13 +721,15 @@ if ansicht == "Konzept":
         else:
             ansicht_pilot = pdk.ViewState(latitude=50.6, longitude=10.8, zoom=5.0, min_zoom=5.0, max_zoom=17)  # Deutschland
         schichten_p = [
-            pdk.Layer("ScatterplotLayer", sicht, get_position=["lon", "lat"], get_radius=1500, radius_min_pixels=14, radius_max_pixels=14,
-                      get_fill_color=[44, 110, 242, 255], get_line_color=CORAL_RGB + [255], stroked=True,
-                      line_width_min_pixels=4, pickable=True, id="pilot"),
+            pdk.Layer("IconLayer", sicht, get_icon="icon_data", get_position=["lon", "lat"], get_size=46, size_scale=1, size_min_pixels=40, size_max_pixels=40,
+                      pickable=True, id="pilot"),
         ]
         with st.container(key="pilotkarte"):
-            links, rechts = st.columns([7.4, 3.6], gap="medium")
+            voll_p = st.session_state.get("vb_pilot", False)
+            links, rechts = (st.container(), st.container()) if voll_p else st.columns([7.4, 3.6], gap="medium")
             with links:
+                karten_leiste(lambda: st.session_state.update(
+                    pilot_stadt=None, pilot_zaehler=st.session_state.get("pilot_zaehler", 0) + 1), "pilot")
                 ereignis_p = st.pydeck_chart(
                     pdk.Deck(layers=schichten_p, initial_view_state=ansicht_pilot, map_style=T["karte"],
                              tooltip={"html": "<b>{stadt_name}</b><br>{lage}<br>Klicken zum Hinein- und Herauszoomen",
@@ -700,12 +742,13 @@ if ansicht == "Konzept":
                     st.session_state["pilot_stadt"] = None if st.session_state["pilot_stadt"] == gewaehlt_p else gewaehlt_p
                     st.session_state["pilot_zaehler"] += 1  # neuer Schlüssel setzt die Auswahl zurück, damit jeder Klick zählt
                     st.rerun()
-            with rechts:
-                gruppen = '<h4>Bester White Spot je Stadt</h4>'
-                for r in sicht.itertuples():
-                    gruppen += (f'<div class="rang"><span class="pin">{r.Index + 1}</span><div class="rang-t"><b>{escape(r.stadt_name)}</b>'
-                                f'<span>{escape(r.lage)} · {escape(r.profil)}</span></div></div>')
-                panel(gruppen + '<p class="klein" style="margin-top:0.8rem">Marker anklicken zoomt in die Stadt, ein weiterer Klick zoomt zurück.</p>')
+            if not voll_p:  # im Vollbild füllt die Karte die Seite
+                with rechts:
+                    gruppen = '<h4>Bester White Spot je Stadt</h4>'
+                    for r in sicht.itertuples():
+                        gruppen += (f'<div class="rang"><span class="pin">{r.Index + 1}</span><div class="rang-t"><b>{escape(r.stadt_name)}</b>'
+                                    f'<span>{escape(r.lage)} · {escape(r.profil)}</span></div></div>')
+                    panel(gruppen + '<p class="klein" style="margin-top:0.8rem">Marker anklicken zoomt in die Stadt, ein weiterer Klick zoomt zurück.</p>')
     st.markdown(f'<div class="frage"><small>Business-Frage</small>{escape(K.BUSINESS_FRAGE)}</div>', unsafe_allow_html=True)
     st.button("Zur Karte öffnen", on_click=lambda: st.session_state.update(ansicht="Karte"), type="primary")
     st.markdown(f'<div class="fuss">{escape(K.HINWEIS)}<br>{escape(bildnachweise())}</div>', unsafe_allow_html=True)
@@ -770,13 +813,16 @@ elif ansicht == "Karte":
                                    get_fill_color=[44, 110, 242, 30], get_line_color=[44, 110, 242, 220], stroked=True,
                                    line_width_min_pixels=2))
 
-    links, rechts = zweispaltig()
+    voll_k = st.session_state.get("vb_karte", False)
+    links, rechts = (st.container(), None) if voll_k else zweispaltig()
     with links:
-        if rechts is None:  # ohne Kommentarfeld sitzt die Legende über der Karte
+        if rechts is None:  # ohne Kommentarfeld oder im Vollbild sitzt die Legende über der Karte
             st.markdown(legende_html(ebene, stadt_name, nur_lagen, senkrecht=False), unsafe_allow_html=True)
+        karten_leiste(lambda: (st.session_state["auswahl"].pop(key, None),
+                               st.session_state.update(karte_zaehler=st.session_state.get("karte_zaehler", 0) + 1)), "karte")
         ereignis = st.pydeck_chart(pdk.Deck(layers=schichten, initial_view_state=view, map_style=T["karte"], tooltip=tooltip),
                                    width="stretch", height=600, on_select="rerun", selection_mode="single-object",
-                                   key=f"karte_{key}")
+                                   key=f"karte_{key}_{st.session_state.get('karte_zaehler', 0)}")
         objekte = (ereignis.selection.objects.get("hex") if ereignis and ereignis.selection else None) or []
         if objekte and objekte[0].get("h3") != auswahl:
             st.session_state["auswahl"][key] = objekte[0]["h3"]
