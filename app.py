@@ -124,6 +124,8 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 [data-testid="stSidebarCollapseButton"] button {{ background: {BRIGHT}; border-radius: 6px; width: 2rem; height: 2rem; }}
 [data-testid="stSidebarCollapseButton"] button:hover {{ background: {SKY}; }}
 
+[data-testid="stLayoutWrapper"]:has(> .st-key-topbar), [data-testid="stElementContainer"]:has(> .st-key-topbar), div:has(> .st-key-topbar) {{ position: sticky; top: 0; z-index: 200; background: {T['bg']}; }}
+.st-key-topbar {{ z-index: 200; background: {T['bg']}; padding: 0.7rem 0 0.35rem 0; box-shadow: 0 6px 10px -8px rgba(11, 27, 77, 0.35); }}
 .kopf {{ margin: 0.2rem 0 0.7rem 0; }}
 .kicker {{ font-size: 0.76rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: {T['akzent']}; }}
 .titel {{ font-family: Georgia, "Times New Roman", serif !important; font-weight: 400 !important; font-size: 1.65rem; line-height: 1.2; letter-spacing: -0.01em; color: {T['titel']}; margin-top: 0.15rem; }}
@@ -192,55 +194,55 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .spalte li {{ font-size: 0.86rem; line-height: 1.45; margin-bottom: 0.45rem; }}
 
 /* Startseite: Aufbau nach dem Vorbild von M&S Food und Waitrose. Überschriften in der Serifenschrift der Marke. */
-.w-intro h1 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 3.1rem; line-height: 1.1; letter-spacing: -0.015em; color: {T['titel']}; margin: 0.4rem 0 1.1rem 0; }}
+.w-intro h1 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 2.5rem; line-height: 1.15; letter-spacing: -0.015em; color: {T['titel']}; margin: 0.3rem 0 1rem 0; }}
 .w-intro h1 u {{ text-decoration-thickness: 3px; text-underline-offset: 7px; }}
 .w-intro-zeile {{ display: grid; grid-template-columns: 1fr 11rem; border-top: 1px solid {T['titel']}; }}
-.w-intro-zeile p {{ margin: 0; padding: 1.2rem 2rem 1.3rem 0; font-size: 1rem; line-height: 1.65; color: {T['text']}; max-width: 54rem; }}
+.w-intro-zeile p {{ margin: 0; padding: 1.1rem 2rem 1.2rem 0; font-size: 0.95rem; line-height: 1.6; color: {T['text']}; max-width: 54rem; }}
 .w-intro-zeile .l {{ border-left: 1px solid {T['titel']}; display: flex; align-items: center; justify-content: center; }}
 .w-intro-zeile img {{ width: 4.4rem; height: 4.4rem; border-radius: 50%; }}
 .w-split {{ display: grid; grid-template-columns: 1.3fr 1fr; min-height: 440px; margin-top: 0.8rem; }}
 .w-split .bild {{ background-size: cover; background-position: center top; position: relative; }}
 .w-split .text {{ background: {MIDNIGHT}; color: #FFFFFF; padding: 2.2rem 2.6rem; display: flex; flex-direction: column; justify-content: center; }}
 .w-kicker {{ font-size: 0.74rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8E9AC2; }}
-.w-marke {{ font-family: Georgia, "Times New Roman", serif; font-size: 5rem; line-height: 1; letter-spacing: 0.08em; margin: 0.6rem 0 0.4rem 0; color: #FFFFFF; }}
-.w-bez {{ font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 1.35rem; color: #CEECFF; }}
-.w-claim {{ font-family: Georgia, "Times New Roman", serif; font-size: 2.5rem; line-height: 1.1; margin-top: 1.4rem; color: #FFFFFF; }}
-.w-sub {{ color: #D6DCEB; font-size: 1rem; margin-top: 0.5rem; }}
+.w-marke {{ font-family: Georgia, "Times New Roman", serif; font-size: 4rem; line-height: 1; letter-spacing: 0.08em; margin: 0.6rem 0 0.4rem 0; color: #FFFFFF; }}
+.w-bez {{ font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 1.2rem; color: #CEECFF; }}
+.w-claim {{ font-family: Georgia, "Times New Roman", serif; font-size: 2.1rem; line-height: 1.1; margin-top: 1.3rem; color: #FFFFFF; }}
+.w-sub {{ color: #D6DCEB; font-size: 0.95rem; margin-top: 0.5rem; }}
 .w-namen {{ margin-top: 1.6rem; font-size: 0.78rem; letter-spacing: 0.28em; color: #8E9AC2; }}
 .w-namen .treffer {{ color: #FFFFFF; font-weight: 700; }}
 .w-namen small {{ letter-spacing: 0.02em; margin-left: 0.8rem; font-size: 0.72rem; }}
 .fallback {{ background: #CEECFF; color: {MIDNIGHT}; display: flex; align-items: center; justify-content: center; text-align: center; font-family: Georgia, "Times New Roman", serif; font-size: 1.1rem; font-style: italic; }}
-.w-usp {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.8rem; background: #CEECFF; padding: 1.7rem 2rem 1.4rem 2rem; margin: 1rem 0 0 0; }}
+.w-usp {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.5rem; background: #CEECFF; padding: 1.3rem 1.8rem 1rem 1.8rem; margin: 1rem 0 0 0; }}
 .w-usp .u {{ display: flex; gap: 0.9rem; align-items: flex-start; border-bottom: 1px solid {MIDNIGHT}; padding-bottom: 1rem; }}
 .w-usp .ik {{ flex: none; width: 2.7rem; height: 2.7rem; border-radius: 8px; background: {MIDNIGHT}; display: flex; align-items: center; justify-content: center; }}
 .w-usp svg {{ width: 1.45rem; height: 1.45rem; stroke: #FFFFFF; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }}
-.w-usp b {{ display: block; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.1rem; line-height: 1.2; color: {MIDNIGHT}; margin-bottom: 0.2rem; }}
-.w-usp span {{ font-size: 0.84rem; line-height: 1.45; color: {MIDNIGHT}; }}
-.w-kopf {{ margin: 2.6rem 0 1.1rem 0; border-bottom: 1px solid {T['titel']}; padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }}
-.w-kopf .w-t {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 2.2rem !important; line-height: 1.1; letter-spacing: -0.01em; margin: 0; color: {T['titel']} !important; }}
-.w-kopf > span {{ font-size: 0.86rem; color: {T['grau']}; text-align: right; max-width: 28rem; }}
-.w-promos {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }}
+.w-usp b {{ display: block; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.05rem; line-height: 1.2; color: {MIDNIGHT}; margin-bottom: 0.2rem; }}
+.w-usp span {{ font-size: 0.85rem; line-height: 1.4; color: {MIDNIGHT}; }}
+.w-kopf {{ margin: 2.4rem 0 1rem 0; border-bottom: 1px solid {T['titel']}; padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }}
+.w-kopf .w-t {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.8rem !important; line-height: 1.1; letter-spacing: -0.01em; margin: 0; color: {T['titel']} !important; }}
+.w-kopf > span {{ font-size: 0.85rem; color: {T['grau']}; text-align: right; max-width: 28rem; }}
+.w-promos {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }}
 .w-promo {{ display: grid; grid-template-columns: 0.9fr 1.2fr; min-height: 330px; color: #FFFFFF; }}
 .w-promo .t {{ padding: 1.6rem 1.4rem; display: flex; flex-direction: column; justify-content: center; }}
-.w-promo h3 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.85rem; line-height: 1.15; color: #CEECFF; margin: 0; }}
+.w-promo h3 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.6rem; line-height: 1.15; color: #CEECFF; margin: 0; }}
 .w-promo p {{ font-size: 0.94rem; line-height: 1.55; margin: 0; color: #FFFFFF; }}
 .w-promo .b {{ background-size: cover; background-position: center 15%; position: relative; }}
 .w-badge {{ position: absolute; top: 1rem; right: 1rem; width: 6rem; height: 6rem; border-radius: 50%; background: #CEECFF; color: {MIDNIGHT}; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: Georgia, "Times New Roman", serif; line-height: 1.05; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25); }}
 .w-badge b {{ font-size: 1.35rem; font-weight: 400; display: block; }}
 .w-badge span {{ font-size: 0.95rem; font-style: italic; display: block; }}
-.w-cards {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }}
+.w-cards {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }}
 .w-card {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; }}
 .w-card .b {{ height: auto; aspect-ratio: 21 / 8; background-size: cover; background-position: center; position: relative; }}
 .w-card .b span {{ position: absolute; left: 0; bottom: 0; background: {MIDNIGHT}; color: #fff; padding: 0.3rem 0.9rem; font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; }}
-.w-cards.deli {{ grid-template-columns: repeat(6, 1fr); gap: 0.7rem; }}
+.w-cards.deli {{ grid-template-columns: repeat(6, 1fr); gap: 1rem; }}
 .w-card.slim .b {{ height: auto; aspect-ratio: 1 / 0.8; background-position: center 45%; }}
 .w-card.slim .i {{ padding: 0.55rem 0.8rem 0.65rem 0.8rem; }}
-.w-card.slim h4 {{ margin: 0; font-size: 1.05rem; }}
-.w-card .i {{ padding: 1rem 1.3rem 1.2rem 1.3rem; }}
-.w-card h4 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.45rem; line-height: 1.15; margin: 0 0 0.4rem 0; color: {T['titel']}; }}
+.w-card.slim h4 {{ margin: 0; font-size: 1.1rem; }}
+.w-card .i {{ padding: 0.9rem 1.1rem 1rem 1.1rem; }}
+.w-card h4 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.2rem; line-height: 1.2; margin: 0 0 0.4rem 0; color: {T['titel']}; }}
 .w-card p {{ margin: 0; font-size: 0.88rem; line-height: 1.5; color: {T['text']}; }}
 .w-liefer {{ display: grid; grid-template-columns: 1fr 1.7fr; gap: 2.2rem; align-items: center; }}
-.w-liefer p {{ margin: 0 0 0.4rem 0; font-size: 0.98rem; line-height: 1.6; color: {T['text']}; }}
+.w-liefer p {{ margin: 0 0 0.4rem 0; font-size: 0.9rem; line-height: 1.55; color: {T['text']}; }}
 .w-liefer small {{ color: {T['grau']}; }}
 .w-logos {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.8rem; }}
 .w-logos div {{ background: #FFFFFF; border: 1px solid {T['rand']}; border-radius: 14px; display: flex; align-items: center; justify-content: center; height: 4.6rem; padding: 0.6rem 0.8rem; }}
@@ -252,8 +254,8 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .review .wer b {{ display: block; color: {T['titel']}; font-size: 0.98rem; }}
 .review .wer span {{ font-size: 0.8rem; color: {T['grau']}; }}
 .review .sterne {{ color: #F2A900; letter-spacing: 0.12em; font-size: 0.95rem; }}
-.review h5 {{ margin: 0.2rem 0 0.4rem 0; font-size: 0.98rem; color: {T['titel']}; line-height: 1.3; }}
-.review p {{ margin: 0 0 0.6rem 0; font-size: 0.86rem; line-height: 1.5; color: {T['text']}; flex: 1; }}
+.review h5 {{ margin: 0.2rem 0 0.4rem 0; font-size: 1rem; color: {T['titel']}; line-height: 1.3; }}
+.review p {{ margin: 0 0 0.6rem 0; font-size: 0.88rem; line-height: 1.5; color: {T['text']}; flex: 1; }}
 .review .daten {{ border-top: 1px solid {T['rand']}; padding-top: 0.6rem; }}
 .review .daten small {{ display: block; color: {T['grau']}; font-size: 0.74rem; margin-top: 0.2rem; }}
 .fiktiv {{ margin-left: auto; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: {T['grau']}; border: 1px solid {T['rand']}; padding: 0.1rem 0.45rem; }}
@@ -609,7 +611,8 @@ def pilotstandorte():
 
 # ---------------------------------------------------------------- Seitenleiste
 # Kopfzeile: Ansichten zum Durchklicken, Stadt, und Optionen der Ansicht. Keine Seitenleiste.
-nav, c_stadt, c_opt = st.columns([7.4, 1.9, 1.9], vertical_alignment="center")
+with st.container(key="topbar"):
+    nav, c_stadt, c_opt = st.columns([7.4, 1.9, 1.9], vertical_alignment="center")
 with nav:
     gewaehlte_ansicht = st.segmented_control("Ansicht", ANSICHTEN, default="Konzept", key="ansicht",
                                              label_visibility="collapsed")
@@ -745,7 +748,7 @@ if ansicht == "Konzept":
 <div class="w-kopf"><div class="w-t">Wertversprechen</div><span>Zwei Momente, ein Laden</span></div>
 <div class="w-promos">{wert}</div>
 
-<div class="w-kopf"><div class="w-t">Vom Deli-Tresen</div><span>Italienisch, mediterran, französisch, frisch zum Mitnehmen und gesund</span></div>
+<div class="w-kopf"><div class="w-t">Unsere Angebote</div><span>Italienisch, mediterran, französisch, frisch zum Mitnehmen und gesund</span></div>
 <div class="w-cards deli">{sortiment}</div>
 
 <div class="w-kopf"><div class="w-t">Drei Städte, drei Hypothesen</div><span>Was jede Stadt dem Modell abverlangt</span></div>
@@ -758,7 +761,7 @@ if ansicht == "Konzept":
 <div class="w-liefer"><div><p>{escape(K.LIEFERUNG_TEXT)}</p><small>{escape(K.LIEFERUNG_HINWEIS)}</small></div><div class="w-logos">{logos}</div></div>
 
 <div class="w-kopf"><div class="w-t">Pilotstandorte</div><span>So finden Sie uns</span></div>
-<p style="margin:0 0 0.9rem 0; font-size:0.95rem; color:{T['text']}">{escape(K.PILOT_TEXT)}</p>
+<p style="margin:0 0 0.9rem 0; font-size:0.9rem; color:{T['text']}">{escape(K.PILOT_TEXT)}</p>
 """, unsafe_allow_html=True)
 
     pil = pilotstandorte()
