@@ -210,9 +210,9 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .w-kopf .w-t {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 2.2rem !important; line-height: 1.1; letter-spacing: -0.01em; margin: 0; color: {T['titel']} !important; }}
 .w-kopf > span {{ font-size: 0.86rem; color: {T['grau']}; text-align: right; max-width: 28rem; }}
 .w-promos {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }}
-.w-promo {{ display: grid; grid-template-columns: 1fr 1fr; min-height: 310px; color: #FFFFFF; }}
+.w-promo {{ display: grid; grid-template-columns: 1fr 1fr; min-height: 280px; color: #FFFFFF; }}
 .w-promo .t {{ padding: 1.8rem 1.7rem; display: flex; flex-direction: column; justify-content: center; }}
-.w-promo h3 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.9rem; line-height: 1.15; color: #CEECFF; margin: 0 0 0.8rem 0; }}
+.w-promo h3 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 2.1rem; line-height: 1.15; color: #CEECFF; margin: 0; }}
 .w-promo p {{ font-size: 0.94rem; line-height: 1.55; margin: 0; color: #FFFFFF; }}
 .w-promo .b {{ background-size: cover; background-position: center 25%; position: relative; }}
 .w-badge {{ position: absolute; top: 1rem; right: 1rem; width: 6rem; height: 6rem; border-radius: 50%; background: #CEECFF; color: {MIDNIGHT}; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: Georgia, "Times New Roman", serif; line-height: 1.05; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25); }}
@@ -650,7 +650,7 @@ if ansicht == "Konzept":
         f'<div class="u"><div class="ik"><svg viewBox="0 0 24 24">{ICONS.get(ic, "")}</svg></div><div><b>{escape(t)}</b><span>{escape(x)}</span></div></div>'
         for ic, t, x in K.USPS)
     wert = "".join(
-        f'<div class="w-promo" style="background:{w["farbe"]}"><div class="t"><h3>{escape(w["titel"])}</h3><p>{escape(w["text"])}</p></div>'
+        f'<div class="w-promo" style="background:{w["farbe"]}"><div class="t"><h3>{escape(w["titel"])}</h3></div>'
         + flaeche(w["bild"], "b")
         + "</div>" for w in K.WERT)
     sortiment = "".join(

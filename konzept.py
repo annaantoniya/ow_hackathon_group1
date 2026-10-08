@@ -55,7 +55,7 @@ SORTIMENT = [
      "Klassiker aus Frankfurt, München und Berlin mit neuem Dreh, zum Beispiel Grüne Soße mit neuen Kartoffeln oder "
      "Leberkäs-Semmel mit eingelegtem Rettich. Lokal, aber nicht klischeehaft.", "regional"),
     ("Bowls & salads", "Açaí, Poke und saisonale Salate. Große vegane und vegetarische Auswahl.", "bowls"),
-    ("Drinks & cocktails", "Naturwein, Craft Beer, Matcha und innovative Cocktail-Varianten zum Mitnehmen.", "drinks"),
+    ("Drinks & cocktails", "Frische Cocktails, Mocktails und Limonaden mit Minze, Beeren und Zitrus, dazu Naturwein und Craft Beer zum Mitnehmen.", "drinks"),
 ]
 
 # Die Beschreibung der Stadt ist eine Hypothese, abgeleitet aus der Spec (Abschnitt 2).
