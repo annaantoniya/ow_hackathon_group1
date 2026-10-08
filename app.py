@@ -64,7 +64,7 @@ GRENZEN = [
     "Kleine Zahlen im Zensus sind aus Gründen der Geheimhaltung leicht verändert oder unterdrückt.",
 ]
 
-st.set_page_config(page_title="White Spots", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="White Spots", layout="wide", initial_sidebar_state="collapsed")
 
 # Hell oder Dunkel aus dem Einstellungs-Popover (Zahnrad). Streamlit selbst kann das Theme nicht zur Laufzeit wechseln,
 # deshalb steuern wir Farben, Karte und Diagramme hier selbst.
@@ -111,7 +111,8 @@ html, body, [class*="css"] {{ font-family: Arial, Helvetica, sans-serif; }}
 [data-testid="stVerticalBlock"] {{ gap: 0.55rem; }}
 header[data-testid="stHeader"] {{ background: transparent; height: 0; min-height: 0; }}
 #MainMenu, footer {{ visibility: hidden; }}
-section[data-testid="stSidebar"] {{ background: {T['sidebar']}; border-right: 1px solid {T['rand']}; box-shadow: 2px 0 14px {T['schatten']}; }}
+section[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], [data-testid="stExpandSidebarButton"] {{ display: none !important; }}
+section[data-testid="stSidebar-unused"] {{ background: {T['sidebar']}; border-right: 1px solid {T['rand']}; box-shadow: 2px 0 14px {T['schatten']}; }}
 section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight: 400; font-size: 1.6rem; color: {T['titel']}; letter-spacing: -0.01em; }}
 /* Ein- und Ausklappen der Seitenleiste: immer sichtbar */
 [data-testid="stSidebarCollapseButton"] button, [data-testid="stExpandSidebarButton"] {{ opacity: 1 !important; visibility: visible !important; }}
@@ -550,26 +551,19 @@ def pilotstandorte():
 
 
 # ---------------------------------------------------------------- Seitenleiste
-st.sidebar.title("White Spots")
-stadt_name = st.sidebar.selectbox("Stadt", list(STAEDTE))
+# Kopfzeile: Ansichten zum Durchklicken, Stadt, Optionen der Ansicht und Einstellungen. Keine Seitenleiste.
+nav, c_stadt, c_opt, zahnrad = st.columns([6.4, 1.7, 1.6, 1.9], vertical_alignment="center")
+with nav:
+    gewaehlte_ansicht = st.segmented_control("Ansicht", ANSICHTEN, default="Konzept", key="ansicht",
+                                             label_visibility="collapsed")
+ansicht = gewaehlte_ansicht or "Konzept"  # ein Klick auf die aktive Ansicht würde sie abwählen
+stadt_name = c_stadt.selectbox("Stadt", list(STAEDTE), label_visibility="collapsed", key="stadt")
 key = STAEDTE[stadt_name]
 df, ist_demo = lade_stadt(key)
 if df is None:
     st.error(f"Für {stadt_name} liegen keine Daten vor. Demo erzeugen mit: python analyse.py --demo")
     st.stop()
 pois = lade_pois(key)
-
-# Kopfzeile: Ansichten zum Durchklicken links, Zahnrad rechts (Darstellung, Deckkraft der Felder, Kommentarfeld)
-nav, zahnrad = st.columns([9.6, 2.0], vertical_alignment="center")
-with nav:
-    gewaehlte_ansicht = st.segmented_control("Ansicht", ANSICHTEN, default="Konzept", key="ansicht",
-                                             label_visibility="collapsed")
-ansicht = gewaehlte_ansicht or "Konzept"  # ein Klick auf die aktive Ansicht würde sie abwählen
-if ansicht == "Konzept":  # die Startseite braucht keine Seitenleiste
-    st.markdown("""<style>
-    section[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], [data-testid="stExpandSidebarButton"],
-    [data-testid="stSidebarCollapseButton"] { display: none !important; }
-    </style>""", unsafe_allow_html=True)
 with zahnrad.popover("Einstellungen", icon=":material/settings:", use_container_width=True):
     st.radio("Darstellung", ["Hell", "Dunkel"], key="darstellung", horizontal=True)
     st.slider("Deckkraft der Felder", 0.2, 1.0, 0.9, 0.05, key="deckkraft",
@@ -587,21 +581,24 @@ top["lage"] = top.apply(lagebezeichnung, axis=1, pois=pois)
 n_konsens = int(top["konsens"].sum())
 optionen = {f"#{int(r.rang)} {r.lage}": r.h3 for r in top.itertuples()}
 
-# Seitenleiste: nur die Bedienelemente der gerade offenen Ansicht
+# Optionen der gerade offenen Ansicht in einem Menü neben den Einstellungen
 ebene, nur_lagen, zeige_portfolio = "Score", True, False
-if ansicht == "Karte":
-    ebene = st.sidebar.selectbox("Ebene", list(EBENEN))
-    nur_lagen = st.sidebar.toggle("Nur Geschäftslagen", value=True)
-    zeige_portfolio = st.sidebar.toggle("Portfolio zeigen", value=False)
-    if "rang_gemeinsam" in df.columns:
-        st.sidebar.radio("Maßstab", ["Innerhalb der Stadt", "Gemeinsam über alle drei"])
-elif ansicht == "Vergleich":
-    gewaehlt = st.sidebar.multiselect("Standorte vergleichen", list(optionen), default=list(optionen)[:2], max_selections=3)
-elif ansicht == "Erklärung":
-    wahl = st.sidebar.selectbox("Standort", list(optionen))
-elif ansicht == "Rangliste":
-    zeige_wahl = st.sidebar.selectbox("Auf der Karte zeigen", list(optionen))
-    st.sidebar.button("Zur Karte", on_click=lambda: (st.session_state["auswahl"].__setitem__(key, optionen[zeige_wahl]),
+gewaehlt, wahl = [], None
+if ansicht != "Konzept" and ansicht != "Annahmen":
+    with c_opt.popover("Optionen", icon=":material/tune:", use_container_width=True):
+        if ansicht == "Karte":
+            ebene = st.selectbox("Ebene", list(EBENEN))
+            nur_lagen = st.toggle("Nur Geschäftslagen", value=True)
+            zeige_portfolio = st.toggle("Portfolio zeigen", value=False)
+            if "rang_gemeinsam" in df.columns:
+                st.radio("Maßstab", ["Innerhalb der Stadt", "Gemeinsam über alle drei"])
+        elif ansicht == "Vergleich":
+            gewaehlt = st.multiselect("Standorte vergleichen", list(optionen), default=list(optionen)[:2], max_selections=3)
+        elif ansicht == "Erklärung":
+            wahl = st.selectbox("Standort", list(optionen))
+        elif ansicht == "Rangliste":
+            zeige_wahl = st.selectbox("Auf der Karte zeigen", list(optionen))
+            st.button("Zur Karte", on_click=lambda: (st.session_state["auswahl"].__setitem__(key, optionen[zeige_wahl]),
                                                      st.session_state.update(ansicht="Karte")))
 
 QUELLE = "Quellen: OpenStreetMap-Mitwirkende, Statistisches Bundesamt (Zensus 2022)."
@@ -883,7 +880,7 @@ elif ansicht == "Rangliste":
 elif ansicht == "Vergleich":
     if len(gewaehlt) < 2:
         kopf("Vergleich", f"Standorte in {stadt_name} nebeneinander")
-        st.info("Wähle in der Seitenleiste mindestens zwei Standorte.")
+        st.info("Wähle unter Optionen mindestens zwei Standorte.")
     else:
         zeilen = top.set_index("h3").loc[[optionen[g] for g in gewaehlt]]
         balken = pd.DataFrame({g: zeilen.iloc[i][list(TREIBER.values())].to_numpy() for i, g in enumerate(gewaehlt)},

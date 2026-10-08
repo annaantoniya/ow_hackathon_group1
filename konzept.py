@@ -39,7 +39,7 @@ USPS = [
 # Wertversprechen: zwei Kacheln, links Farbfläche mit Text, rechts Bild mit Plakette
 WERT = [
     {"farbe": "#0B1B4D", "titel": "Grab & go for the working day",
-     "text": "Kaffee, Pastries und ein gesundes Mittagessen für den Weg zwischen zwei Terminen. In der App bezahlen und einfach gehen.",
+     "text": "Frische Sandwiches, Säfte und Snacks für den Weg zwischen zwei Terminen. In der App bezahlen und einfach gehen.",
      "plakette": ["No", "checkout"], "bild": "wert_tag"},
     {"farbe": "#002C77", "titel": "Gather in the evening",
      "text": "Frisches Brot, Käse, Dips und etwas Gutes zu trinken, auch noch spät. Für Besuch, Picknick und den spontanen Abend.",
@@ -48,9 +48,9 @@ WERT = [
 
 # Sortiment: sechs Karten mit Bild (Titel, Text, Bildschlüssel)
 SORTIMENT = [
-    ("Italian", "Frische Pasta, Antipasti, Burrata und ein richtig guter Kaffee.", "italienisch"),
+    ("Italian", "Belegte Ciabatta und Panini mit Hähnchen, Avocado, Schinken und Tomate, dazu frische Pasta und Antipasti.", "italienisch"),
     ("Mediterranean", "Mezze, Hummus, gegrilltes Gemüse und Oliven.", "mediterran"),
-    ("French bakery", "Croissants, Baguette und Pastries, frisch gebacken und auch abends noch da.", "franzoesisch"),
+    ("French bakery", "Pain au chocolat, Palmiers, Pastéis de nata und süße Pastries, frisch gebacken und auch abends noch da.", "franzoesisch"),
     ("Regional, reimagined",
      "Klassiker aus Frankfurt, München und Berlin mit neuem Dreh, zum Beispiel Grüne Soße mit neuen Kartoffeln oder "
      "Leberkäs-Semmel mit eingelegtem Rettich. Lokal, aber nicht klischeehaft.", "regional"),
