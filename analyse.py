@@ -24,6 +24,7 @@ Gesamtlogik (maths.md, Abschnitt 19)
 ------------------------------------
     Raster -> Distanzgewichte -> Nachfrage N, Tagesindex t, Affinität q
            -> Potenzial P -> Wettbewerbsdruck K -> Huff-Score U, Wettbewerbsfreiheit W = U/P
+    Milieu-Malus m dämpft die Anziehung eines Ladens in Spielhallen-/Rotlicht-Umfeld.
     parallel: Merkmale -> räumliches NB-Modell (Vergleich mit Poisson und NB) -> erwartete Läden ŷ
               -> Lücke g
     danach:   Konsens (PR(U) >= 90 und PR(g) >= 90), Robustheit, Portfolio
@@ -59,10 +60,13 @@ PARAMETER = {
     # Nachfrage
     # k_min und k_max sind keine festen Werte, sondern das 5- und 95-%-Quantil von Miete/Median
     # in der jeweiligen Stadt (siehe kaufkraft_grenzen). theta = Anteil der Tagesbevölkerung.
-    "gamma": 1.0, "k_quantil_unten": 0.05, "k_quantil_oben": 0.95, "theta": 0.6,
+    "gamma": 1.0, "k_quantil_unten": 0.05, "k_quantil_oben": 0.95, "theta": 0.4,
     # Frequenzgewichte absteigend: Büro > Hochschule > Bahnhof = Tram/U-Bahn > Bus.
     "w_bahnhof": 2.0, "w_buero": 4.0, "w_hochschule": 3.0, "w_tram_ubahn": 2.0, "w_bus": 1.0,
     "q_min": 0.5, "q_max": 1.5,
+    # Milieu-Malus: m_c = max(m_min, 2^(-s_c / milieu_halbwert)) mit s_c = distanzgewichtete Zahl
+    # von Spielhallen, Wettbüros, Erotik, Drogenhilfe und Pfandleihern im Umfeld des Standorts.
+    "h_milieu_m": 250, "milieu_halbwert": 2.0, "m_min": 0.2,
     # Wettbewerb. a_0 = 1,33 heißt: ohne Wettbewerb gewinnt der Laden direkt vor der Tür
     # (Distanz d_selbst) rund 60 Prozent der Nachfrage: 2*2^(-100/400) / (2*2^(-100/400) + 1,33).
     "a_neu": 2.0, "a_0": 1.33,
@@ -87,8 +91,8 @@ PARAMETER = {
 
 SPANNEN = {
     "h_anwohner_m": ("wert", 300, 500), "h_tag_m": ("wert", 150, 350),
-    "gamma": ("wert", 0.5, 1.5), "theta": ("wert", 0.4, 0.8),
-    "a_0": ("faktor", 0.5, 1.5),
+    "gamma": ("wert", 0.5, 1.5), "theta": ("wert", 0.2, 0.6),
+    "a_0": ("faktor", 0.5, 1.5), "milieu_halbwert": ("faktor", 0.5, 1.5),
     **{k: ("faktor", 0.5, 1.5) for k in PARAMETER if k.startswith(("w_", "alpha_"))},
 }
 
@@ -98,6 +102,7 @@ AFFINITAET = ["cafe", "restaurant", "bar", "buchhandlung", "interior", "boutique
               "fitness_yoga", "kultur", "galerie_museum", "coworking", "fahrradladen"]
 # Reihenfolge = Rangfolge der Gewichte, absteigend. Der Robustheitstest hält sie ein.
 FREQUENZ = ["buero", "hochschule", "bahnhof", "tram_ubahn", "bus"]
+MILIEU = ["spielhalle", "wettbuero", "erotik", "drogenhilfe", "pfandleiher"]
 ALLE_KATEGORIEN = WETTBEWERB_DIREKT + WETTBEWERB_BREIT + AFFINITAET + FREQUENZ
 MERKMALE = ["einwohner", "kaufkraft", "alter", "affinitaet", "tag"]
 
@@ -186,6 +191,18 @@ def tagesindex(g: pd.DataFrame, p: dict) -> np.ndarray:
     return sum(p[f"w_{c}"] * g[f"poi_{c}"].to_numpy() for c in FREQUENZ)
 
 
+def milieu(g: pd.DataFrame, paare: Paare, p: dict) -> tuple[np.ndarray, np.ndarray]:
+    """s_c = sum_j M_j f_hM(d_cj),  m_c = max(m_min, 2^(-s_c / milieu_halbwert)).
+
+    M_j zählt Spielhallen, Wettbüros, Erotik, Drogenhilfe und Pfandleiher. Ersatz für fehlende
+    kleinräumige Kriminalitätsdaten. m_c dämpft die Anziehung eines neuen Ladens am Standort c:
+    Bei s = milieu_halbwert halbiert sie sich, m_min verhindert, dass ein Standort ganz wegfällt.
+    """
+    M = sum(g[f"poi_{c}"].to_numpy(float) for c in MILIEU)
+    s = paare.summe(M, paare.f(p["h_milieu_m"]))
+    return s, np.maximum(p["m_min"], np.exp2(-s / p["milieu_halbwert"]))
+
+
 # ---------------------------------------------------------------------------
 # Abschnitt 6: Standortaffinität per PCA
 # ---------------------------------------------------------------------------
@@ -240,18 +257,21 @@ def wettbewerbsstaerke(g: pd.DataFrame, p: dict) -> np.ndarray:
     return sum(p[f"alpha_{c}"] * g[f"poi_{c}"].to_numpy() for c in WETTBEWERB_DIREKT + WETTBEWERB_BREIT)
 
 
-def huff(paare: Paare, O: np.ndarray, K: np.ndarray, fh: np.ndarray, p: dict) -> np.ndarray:
-    """U_c = sum_i O_i * a_neu f(d_ic) / (a_neu f(d_ic) + K_i + A_0).
+def huff(paare: Paare, O: np.ndarray, K: np.ndarray, fh: np.ndarray, p: dict,
+         m: np.ndarray | None = None) -> np.ndarray:
+    """U_c = sum_i O_i * a_neu m_c f(d_ic) / (a_neu m_c f(d_ic) + K_i + A_0).
 
     Über die Paarliste: Kandidat c = paare.i, Quelle i = paare.j (die Liste ist symmetrisch).
+    m_c ist der Milieu-Malus des Standorts (ohne Angabe 1).
     Mit K = 0 ergibt sich das Potenzial P (Abschnitt 8), deshalb gilt immer U <= P.
     """
-    anziehung = p["a_neu"] * fh
+    anziehung = p["a_neu"] * fh * (1.0 if m is None else m[paare.i])
     anteil = anziehung / (anziehung + K[paare.j] + p["a_0"])
     return np.bincount(paare.i, weights=O[paare.j] * anteil, minlength=paare.n)
 
 
-def score(g: pd.DataFrame, paare: Paare, q: np.ndarray, p: dict, miete: dict) -> dict:
+def score(g: pd.DataFrame, paare: Paare, q: np.ndarray, p: dict, miete: dict,
+          m: np.ndarray | None = None) -> dict:
     """Rechnet die Abschnitte 4, 5 und 7 bis 10 für einen Parametersatz.
 
     Getrennt für Anwohner (A, Halbwert h_anwohner) und Tagesbevölkerung (T, Halbwert h_tag),
@@ -269,8 +289,8 @@ def score(g: pd.DataFrame, paare: Paare, q: np.ndarray, p: dict, miete: dict) ->
     KA, KT = paare.summe(A, fA), paare.summe(A, fT)
     null = np.zeros(paare.n)
     r = {"N": N, "t": t, "OA": OA, "OT": OT, "KA": KA, "KT": KT,
-         "PA": huff(paare, OA, null, fA, p), "PT": huff(paare, OT, null, fT, p),
-         "UA": huff(paare, OA, KA, fA, p), "UT": huff(paare, OT, KT, fT, p)}
+         "PA": huff(paare, OA, null, fA, p, m), "PT": huff(paare, OT, null, fT, p, m),
+         "UA": huff(paare, OA, KA, fA, p, m), "UT": huff(paare, OT, KT, fT, p, m)}
     r["P"], r["U"] = r["PA"] + r["PT"], r["UA"] + r["UT"]
     # W = U/P: Anteil des Potenzials, den der Wettbewerb übrig lässt. Ohne Potenzial undefiniert.
     r["W"] = np.divide(r["U"], r["P"], out=np.full(paare.n, np.nan), where=r["P"] > 0)
@@ -310,11 +330,13 @@ def bewerte_stadt(g: pd.DataFrame, p: dict) -> tuple[pd.DataFrame, dict]:
     miete = kaufkraft_grenzen(g, gemessen, p)
 
     aff_index, q, pca_info = affinitaet(g, paare, p)
-    r = score(g, paare, q, p, miete)
+    milieu_umfeld, m = milieu(g, paare, p)
+    r = score(g, paare, q, p, miete, m)
     lage = geschaeftslage(g, p)
 
     g["n_anwohner"], g["t_index"] = r["N"], r["t"]
     g["aff_index"], g["q"] = aff_index, q
+    g["milieu_umfeld"], g["m_milieu"] = milieu_umfeld, m
     g["p_anw"], g["p_tag"], g["p"] = r["PA"], r["PT"], r["P"]
     g["u_anw"], g["u_tag"], g["u"], g["w"] = r["UA"], r["UT"], r["U"], r["W"]
     g["geschaeftslage"] = lage
@@ -329,7 +351,7 @@ def bewerte_stadt(g: pd.DataFrame, p: dict) -> tuple[pd.DataFrame, dict]:
     g["profil"] = np.select([g["anteil_tag"] > hoch, g["anteil_tag"] < tief],
                             ["Mittagsstandort", "Feierabendstandort"], "Ganztagsstandort")
 
-    ctx = {"paare": paare, "q": q, "miete": miete, "r": r, "lage": lage,
+    ctx = {"paare": paare, "q": q, "m": m, "miete": miete, "r": r, "lage": lage,
            "pca": pca_info, "aff_index": aff_index}
     return g, ctx
 
@@ -618,7 +640,8 @@ def robustheit(g: pd.DataFrame, ctx: dict, p: dict, laeufe: int) -> pd.DataFrame
     pos = np.flatnonzero(maske)
     alle_raenge = np.empty((laeufe, len(pos)), dtype=np.int32)
     for r in range(laeufe):
-        U = score(g, ctx["paare"], ctx["q"], ziehe_parameter(p, rng), ctx["miete"])["U"]
+        pr = ziehe_parameter(p, rng)
+        U = score(g, ctx["paare"], ctx["q"], pr, ctx["miete"], milieu(g, ctx["paare"], pr)[1])["U"]
         alle_raenge[r] = raenge(U, maske)[pos]
     aus = pd.DataFrame(index=g.index, columns=["top10_anteil", "rang_median", "rang_p10", "rang_p90"],
                        dtype=float)
@@ -636,10 +659,10 @@ def robustheit(g: pd.DataFrame, ctx: dict, p: dict, laeufe: int) -> pd.DataFrame
 def portfolio(g: pd.DataFrame, ctx: dict, p: dict) -> tuple[pd.DataFrame, float]:
     """Gierige Maximierung von
         F(S) = sum_i O^A_i X^A_i(S) / (X^A_i(S) + K^A_i + A_0) + (gleich für T),
-        X_i(S) = sum_{c in S} a_neu f(d_ic).
+        X_i(S) = sum_{c in S} a_neu m_c f(d_ic).
     F ist monoton und submodular; gierig erreicht mindestens 1 - 1/e ≈ 63 % des Optimums.
     """
-    r, paare = ctx["r"], ctx["paare"]
+    r, paare, m = ctx["r"], ctx["paare"], ctx["m"]
     fA, fT = paare.f(p["h_anwohner_m"]), paare.f(p["h_tag_m"])
     ordnung = np.argsort(paare.i, kind="stable")
     start = np.searchsorted(paare.i[ordnung], np.arange(paare.n + 1))
@@ -657,15 +680,15 @@ def portfolio(g: pd.DataFrame, ctx: dict, p: dict) -> tuple[pd.DataFrame, float]
         i, a, t = nachbarn(c)
         alt = (r["OA"][i] * XA[i] / (XA[i] + r["KA"][i] + p["a_0"])
                + r["OT"][i] * XT[i] / (XT[i] + r["KT"][i] + p["a_0"])).sum()
-        nA, nT = XA[i] + p["a_neu"] * a, XT[i] + p["a_neu"] * t
+        nA, nT = XA[i] + p["a_neu"] * m[c] * a, XT[i] + p["a_neu"] * m[c] * t
         neu = (r["OA"][i] * nA / (nA + r["KA"][i] + p["a_0"])
                + r["OT"][i] * nT / (nT + r["KT"][i] + p["a_0"])).sum()
         return neu - alt
 
     def hinzufuegen(c, XA, XT):
         i, a, t = nachbarn(c)
-        XA[i] += p["a_neu"] * a
-        XT[i] += p["a_neu"] * t
+        XA[i] += p["a_neu"] * m[c] * a
+        XT[i] += p["a_neu"] * m[c] * t
 
     kandidaten = g.loc[g["rang"].notna()].nsmallest(p["n_kandidaten_portfolio"], "rang").index.to_numpy()
     XA, XT = np.zeros(paare.n), np.zeros(paare.n)
@@ -728,7 +751,7 @@ def pruefe(g: pd.DataFrame, ctx: dict, p: dict) -> list[str]:
     if (r["U"] > r["P"] + 1e-12).any():
         fehler.append("U > P")
     ohne = score(g.assign(**{f"poi_{c}": 0 for c in WETTBEWERB_DIREKT + WETTBEWERB_BREIT}),
-                 paare, ctx["q"], p, ctx["miete"])["W"]
+                 paare, ctx["q"], p, ctx["miete"], ctx["m"])["W"]
     if not np.allclose(ohne[~np.isnan(ohne)], 1):
         fehler.append("Ohne Wettbewerber ist W nicht überall 1")
     rang = g["rang"].dropna().to_numpy()
@@ -774,6 +797,8 @@ def demo_raster(stadt: str, rng: np.random.Generator) -> pd.DataFrame:
     g["anteil_hh_1_3"] = np.clip(0.85 + 0.08 * naehe + 0.03 * rng.normal(size=n), 0.6, 1.0)
     for c in AFFINITAET + FREQUENZ + WETTBEWERB_BREIT:
         g[f"poi_{c}"] = rng.poisson(0.4 * naehe ** 1.5 * (3 if c in ("bus", "buero", "restaurant") else 1))
+    for c in MILIEU:
+        g[f"poi_{c}"] = rng.poisson(0.05 * naehe ** 3)
     miete_rel = np.nan_to_num(g["miete_qm"].to_numpy() / median, nan=1.0)
     for c in WETTBEWERB_DIREKT:
         g[f"poi_{c}"] = rng.poisson(0.05 * naehe * miete_rel ** 2 * (1 + g["poi_cafe"]))
@@ -803,8 +828,8 @@ def main() -> None:
             raster[s] = demo_raster(s, rng)
         elif datei.exists():
             raster[s] = pd.read_csv(datei)
-            if "anteil_hh_1_3" not in raster[s]:
-                raise SystemExit(f"{datei} hat keine Spalte anteil_hh_1_3 (alter Stand). "
+            if "anteil_hh_1_3" not in raster[s] or f"poi_{MILIEU[0]}" not in raster[s]:
+                raise SystemExit(f"{datei} ist auf altem Stand (anteil_hh_1_3 oder Milieu-POIs fehlen). "
                                  "Bitte mit `python datengrundlage.py` neu erzeugen.")
         else:
             raise SystemExit(f"{datei} fehlt. Erst `python datengrundlage.py` ausführen "

@@ -51,7 +51,7 @@ Ausgaben
     alter_geschaetzt  True, wenn der Stadtwert eingesetzt wurde
     haushalte         Zahl der Haushalte
     anteil_hh_1_3     Anteil der Haushalte mit einer bis drei Personen
-    poi_<kategorie>   Anzahl POIs je Kategorie (33 Spalten)
+    poi_<kategorie>   Anzahl POIs je Kategorie (34 Spalten)
 
 Laufzeit beim ersten Start: Download wenige Minuten, Zensus je Stadt rund eine Minute,
 Overpass je Stadt bis zu einigen Minuten. Danach kommt alles aus `zensus/` und `cache/`.
@@ -182,7 +182,15 @@ POI_REGELN: list[tuple[str, str, list[dict[str, set[str] | None]]]] = [
     ("frequenz", "bus", [{"highway": {"bus_stop"}}]),
     ("frequenz", "hochschule", [{"amenity": {"university", "college"}}]),
     ("frequenz", "buero", [{"office": None}]),
+    # milieu: Umfeld, das Laufkundschaft für Feinkost abschreckt (Ersatz für fehlende Kriminalitätsdaten)
+    ("milieu", "spielhalle", [{"amenity": {"gambling", "casino"}}, {"leisure": {"adult_gaming_centre"}}]),
+    ("milieu", "wettbuero", [{"shop": {"bookmaker"}}]),
+    ("milieu", "erotik", [{"shop": {"erotic"}}, {"amenity": {"stripclub", "brothel", "love_hotel"}}]),
+    ("milieu", "drogenhilfe", [{"amenity": {"social_facility"}, "social_facility:for": {"drug_addicted"}}]),
+    ("milieu", "pfandleiher", [{"shop": {"pawnbroker"}}]),
 ]
+# Gruppen, die ein Overpass-Cache ohne Gruppenliste enthält (Stand vor der Gruppe milieu).
+GRUPPEN_ALTER_CACHE = ["wettbewerb_direkt", "wettbewerb_breit", "affinitaet", "frequenz"]
 
 KATEGORIEN = list(dict.fromkeys(k for _, k, _ in POI_REGELN))
 GRUPPE_VON = {k: g for g, k, _ in POI_REGELN}
@@ -463,11 +471,20 @@ def lade_osm(stadt: str, gebiet: shapely.Geometry) -> list[dict]:
     Eine Gesamtabfrage läuft auf den öffentlichen Servern in den Timeout (getestet im Oktober 2026).
     Deshalb eine Abfrage je Gruppe; scheitert eine Gruppe, wird sie nach Kategorien geteilt.
     Jeder fertige Teil wird sofort gespeichert, damit ein Abbruch nichts Geholtes verwirft.
+    Kommt eine Gruppe neu hinzu, wird nur sie nachgeholt und in den bestehenden Cache gemischt.
     """
     CACHE.mkdir(exist_ok=True)
     datei = CACHE / f"{stadt}_overpass.json"
+    gruppen_datei = CACHE / f"{stadt}_overpass_gruppen.json"
+    alle_gruppen = list(dict.fromkeys(GRUPPE_VON.values()))
+    elemente, vorhanden = [], []
     if datei.exists():
-        return json.loads(datei.read_text(encoding="utf-8"))
+        elemente = json.loads(datei.read_text(encoding="utf-8"))
+        vorhanden = (json.loads(gruppen_datei.read_text(encoding="utf-8")) if gruppen_datei.exists()
+                     else GRUPPEN_ALTER_CACHE)
+    fehlend = [g for g in alle_gruppen if g not in vorhanden]
+    if not fehlend:
+        return elemente
 
     def teil(name: str, kategorien: set[str]) -> list[dict]:
         tdatei = CACHE / f"{stadt}_teil_{name}.json"
@@ -477,8 +494,8 @@ def lade_osm(stadt: str, gebiet: shapely.Geometry) -> list[dict]:
         tdatei.write_text(json.dumps(daten, ensure_ascii=False), encoding="utf-8")
         return daten
 
-    elemente, gesehen = [], set()
-    for gruppe in dict.fromkeys(GRUPPE_VON.values()):
+    nach_id = {e["osm_id"]: e for e in elemente}
+    for gruppe in fehlend:
         kategorien = {k for k, g in GRUPPE_VON.items() if g == gruppe}
         print(f"  Overpass: {stadt}, Gruppe {gruppe} ...")
         try:
@@ -487,11 +504,15 @@ def lade_osm(stadt: str, gebiet: shapely.Geometry) -> list[dict]:
             print(f"  Gruppe {gruppe} gescheitert, teile nach Kategorien.")
             teile = [teil(k, {k}) for k in sorted(kategorien)]
         for e in (e for t in teile for e in t):
-            if e["osm_id"] not in gesehen:
-                gesehen.add(e["osm_id"])
+            if e["osm_id"] in nach_id:
+                # Schon aus einer anderen Gruppe bekannt: nur die neu benötigten Tags ergänzen.
+                nach_id[e["osm_id"]]["tags"].update(e["tags"])
+            else:
+                nach_id[e["osm_id"]] = e
                 elemente.append(e)
 
     datei.write_text(json.dumps(elemente, ensure_ascii=False), encoding="utf-8")
+    gruppen_datei.write_text(json.dumps(alle_gruppen), encoding="utf-8")
     for tdatei in CACHE.glob(f"{stadt}_teil_*.json"):
         tdatei.unlink()
     return elemente
