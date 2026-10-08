@@ -160,7 +160,6 @@ def analyse_ansicht(H, stadt, key):
     lm = _json("luecke_modell.json") or {}
     koef, se = lm.get("koeffizienten", {}), lm.get("standardfehler", {})
     n_k = sum(d["konsens"] for d in daten.values())
-    pl_werte = [d["plaus"] for d in daten.values() if d["plaus"] is not None]
     dev_out = lm.get("erklaerte_devianz_ausserhalb")
     s = scored(key)
     s_stadt = s[s["in_stadt"]]
@@ -172,9 +171,7 @@ def analyse_ansicht(H, stadt, key):
     # 0 Executive Summary
     zahlen([
         (f"{n_k} Konsens-Standorte", " · ".join(f"{n} {v['konsens']}" for n, v in daten.items()) + ". Konsens heißt: Score (Huff-Modell) und Angebotslücke (Regression) liegen beide im obersten Zehntel."),
-        (f"{min(pl_werte) * 100:.0f} bis {max(pl_werte) * 100:.0f} %", "der Feinkostläden liegen in den 20 % Zellen mit dem höchsten Potenzial. Bei Zufall wären es 20 %."),
-        (f"{dev_out * 100:.0f} %" if dev_out is not None else "–", "der Ladenverteilung erklärt das Umfeld außerhalb der Stichprobe (räumliche Kreuzvalidierung)."),
-    ])
+    ], spalten=1)
     pipeline([
         ("1 Raster", "Distanz", "Nähe zählt, 1.500 m Reichweite", "a1"),
         ("2 Nachfrage", "Anwohner und Tag", "Einwohner, Miete, Alter, Frequenz", "a1"),
@@ -259,12 +256,7 @@ def analyse_ansicht(H, stadt, key):
             "Es gibt keine offenen kleinräumigen Kriminalitätsdaten. Das Milieu wird deshalb über konkrete Orte erfasst, nicht über Bevölkerungsgruppen. Das ist methodisch sauberer und vermeidet Diskriminierung.",
             beleg5)
 
-    a_neu, a_0 = P["a_neu"], P["a_0"]
-    vor_tuer = a_neu * 2.0 ** (-dself / hA) / (a_neu * 2.0 ** (-dself / hA) + a_0)
-
     def beleg6():
-        zahlen([(f"{vor_tuer * 100:.0f} %", f"gewinnt ein Laden vor der Tür ohne Wettbewerb (a_neu = {f1(a_neu)}, a₀ = {f2(a_0)}, Abstand {dself} m)"),
-                (f"{d['w_top10'] * 100:.0f} %", f"des Potenzials bleiben an den Top-10-Standorten in {stadt} nach dem Wettbewerb übrig (Median von W)")], spalten=2)
         st.markdown("<p class='klein'>Der Rest kauft online, woanders oder gar nicht (Außenoption a₀). Sie darf nie null sein, sonst gewänne jeder Laden alles.</p>", unsafe_allow_html=True)
 
     schritt("6", f"Bestehende Läden schöpfen an den Top-10-Standorten in {stadt} einen großen Teil des Potenzials ab: Es bleiben {d['w_top10'] * 100:.0f} %.",
@@ -282,17 +274,8 @@ def analyse_ansicht(H, stadt, key):
     st.markdown("<p class='klartext'>Zielgröße y: direkte Wettbewerber je Zelle. Fünf distanzgeglättete Merkmale X erklären sie, räumliche Gauß-Kerne S fangen den Rest der Nachbarschaft auf.</p>", unsafe_allow_html=True)
     st.latex(r"(\hat\beta,\hat b)=\arg\max\left(\log L-\tfrac{\lambda}{2}\|b\|_2^2\right)")
     st.markdown(f"<p class='klartext'>Ridge-Strafe auf die Kern-Gewichte b. λ minimiert die Devianz außerhalb der Stichprobe (gewählt: λ = {f0(lm.get('s_lambda', 0))}).</p>", unsafe_allow_html=True)
-    c1, c2 = st.columns(2, gap="medium")
+    c1, c2 = st.columns([1.3, 1], gap="medium")
     with c1:
-        H.exhibit_titel("Modellvergleich", f"Test-Devianz, kleiner ist besser. Gewählt: {str(lm.get('variante', '–')).replace('_', ' ')}")
-        td = lm.get("test_devianz", {})
-        if td:
-            md = pd.DataFrame({"Modell": [m.replace("_", " ") for m in td], "Devianz": list(td.values()), "Gewählt": [m == lm.get("variante") for m in td]})
-            st.altair_chart(H.theme_chart(alt.Chart(md).mark_bar().encode(
-                y=alt.Y("Modell:N", sort=None, title=None, axis=alt.Axis(labelLimit=200)), x=alt.X("Devianz:Q", title="Test-Devianz −2 log L", scale=alt.Scale(zero=False)),
-                color=alt.condition("datum.Gewählt", alt.value("#2C6EF2"), alt.value("#B9BDC6")), tooltip=["Modell", alt.Tooltip("Devianz:Q", format=".0f")]).properties(height=170)), width="stretch")
-        st.markdown(f"<p class='klein'>Auswahlregel: Ein komplexeres Modell nur, wenn es die Test-Devianz um mindestens {int(P['min_verbesserung_modell'] * 100)} % senkt. Welche Variante gilt, steht in luecke_modell.json.</p>", unsafe_allow_html=True)
-    with c2:
         H.exhibit_titel("Treiber", "Koeffizient mit ±1,96 Standardfehler, standardisierte Merkmale")
         if koef:
             kd = pd.DataFrame([{"Merkmal": m, "Koeffizient": koef[m], "lo": koef[m] - 1.96 * se.get(m, 0), "hi": koef[m] + 1.96 * se.get(m, 0)} for m in analyse.MERKMALE if m in koef])
@@ -300,9 +283,20 @@ def analyse_ansicht(H, stadt, key):
             st.altair_chart(H.theme_chart((basis.mark_rule(strokeWidth=3, color="#8DB4FF").encode(x=alt.X("lo:Q", title="Koeffizient"), x2="hi:Q")
                                             + basis.mark_point(filled=True, size=110, color="#0B1B4D").encode(x="Koeffizient:Q", tooltip=["Merkmal", alt.Tooltip("Koeffizient:Q", format="+.2f")])
                                             + alt.Chart(pd.DataFrame({"x": [0]})).mark_rule(color="#98A0B3").encode(x="x:Q")).properties(height=190)), width="stretch")
-        neg = lm.get("negative_vorzeichen", [])
-        if neg:
-            st.markdown(f"<p class='klein'><b>Unerwartetes Vorzeichen:</b> {escape(', '.join(neg))}. Es wird berichtet und nicht korrigiert. Die Standardfehler sind zu klein, weil Nachbarzellen nicht unabhängig sind, sie dienen nur zur Orientierung.</p>", unsafe_allow_html=True)
+    with c2:
+        if koef:
+            namen = {"einwohner": "Einwohner", "kaufkraft": "Kaufkraft (Miete)", "alter": "Anteil 20 bis 49 Jahre", "affinitaet": "Affinität", "tag": "Tagesbevölkerung"}
+            zeilen = "".join(f"<li><b>{namen.get(m, m)}</b>: {koef[m]:+.2f}".replace(".", ",") + f" → Faktor {f2(float(np.exp(koef[m])))}</li>"
+                             for m in analyse.MERKMALE if m in koef)
+            neg = lm.get("negative_vorzeichen", [])
+            neg_txt = (f"<p>Bei {escape(', '.join(namen.get(m, m) for m in neg))} ist das Vorzeichen negativ: Steigt das Merkmal, stehen bei sonst gleichen Merkmalen weniger Läden. "
+                       "Erwartet hatten wir das Gegenteil. Wir berichten den Wert so und korrigieren ihn nicht.</p>") if neg else ""
+            kasten("So liest man die Treiber", "Was ändert sich, wenn ein Merkmal steigt?",
+                   "<p>Jeder Punkt zeigt, wie sich die erwartete Zahl direkter Wettbewerber in einer Zelle ändert, wenn das Merkmal um eine Standardabweichung steigt "
+                   "und alle anderen gleich bleiben. Rechts von 0 heißt mehr Läden, links weniger. Weil alle Merkmale standardisiert sind, kann man die Punkte direkt vergleichen.</p>"
+                   f"<p>Das Modell rechnet auf der log-Skala. e hoch Koeffizient ist der Faktor auf die erwartete Ladenzahl:</p><ul>{zeilen}</ul>"
+                   + neg_txt
+                   + "<p class='schwach'>Die Balken zeigen ±1,96 Standardfehler. Sie sind zu schmal, weil benachbarte Zellen nicht unabhängig sind. Nimm sie nur als grobe Orientierung.</p>")
     st.latex(r"g_c=\sum_{j\in I}(\hat\mu_j-y_j)\,f(d_{cj})")
     st.markdown("<p class='klartext'>Erwartete minus vorhandene Läden, über die Laufweite geglättet. Positiv heißt: Es stehen weniger Läden da, als das Umfeld erwarten lässt.</p>", unsafe_allow_html=True)
 
