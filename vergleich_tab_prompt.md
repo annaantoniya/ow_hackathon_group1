@@ -15,7 +15,7 @@ Kandidaten sind nur Zeilen mit `in_stadt == True` und `geschaeftslage == True`, 
 `analyse.py` normiert die Nachfrage für jede Stadt einzeln, denn die Quellnachfrage summiert sich je Stadt zu 1. Deshalb sind absolute Werte zwischen Städten **nicht** vergleichbar. Ein Standort in Berlin hat automatisch kleinere Rohwerte als einer in Frankfurt.
 
 - ❌ **Nicht nebeneinanderstellen, wenn die Städte verschieden sind:** `u`, `p`, `p_anw`, `p_tag`, `n_anwohner`, `t_index`, `aff_index`, `rang`. Berlin hat ungefähr 9.500 Zellen, Frankfurt ungefähr 2.600, Rang 10 bedeutet also nicht dasselbe. Auch `x_*` gehört dazu, weil diese Werte je Stadt standardisiert sind.
-- ✅ **Vergleichbar:** Prozentränge `pr_*` (0 bis 100, jeweils innerhalb der eigenen Stadt), `konsens`, `profil`, `w` (Anteil 0 bis 1), `m_milieu` (0,2 bis 1), `beitrag_*` (gemeinsame Koeffizienten über alle Städte), `luecke`, `y_erwartet` und `y_direkt` (in der Einheit „Läden“, aus dem gemeinsamen Modell mit Stadteffekt).
+- ✅ **Vergleichbar:** Prozentränge `pr_*` (0 bis 100, jeweils gegen die Geschäftslagen der eigenen Stadt), `konsens`, `profil`, `w` (Anteil 0 bis 1), `m_milieu` (0,2 bis 1), `beitrag_*` (gemeinsame Koeffizienten über alle Städte), `luecke`, `y_erwartet` und `y_direkt` (in der Einheit „Läden“, aus dem gemeinsamen Modell mit Stadteffekt).
 - ⚠️ **Rohwerte nur als Kontext:** Miete in Euro immer relativ zum Median der eigenen Stadt zeigen, also `miete_qm / Median(miete_qm der Stadtzellen)`. Die Mieten der drei Städte liegen zu weit auseinander.
 
 ## Merkmale für den Vergleich, in dieser Reihenfolge
@@ -25,6 +25,7 @@ Kandidaten sind nur Zeilen mit `in_stadt == True` und `geschaeftslage == True`, 
 | Merkmal | Spalte | Lesart |
 |---|---|---|
 | Score-Perzentil | `pr_score` | Sicht A: gewinnbare Nachfrage |
+| Score-Index | `score_index` | U geteilt durch den Median der Geschäftslagen der Stadt, „2,5-mal so stark wie eine typische Geschäftslage“. Unterscheidet die Top-Standorte, die beim Perzentil alle bei 99 bis 100 liegen. Nur innerhalb einer Stadt vergleichbar |
 | Lücken-Perzentil | `pr_luecke` | Sicht B: weniger Läden als erwartet |
 | Konsens | `konsens` | beide ≥ 90, das sind die stärksten Kandidaten |
 | Rang in der Stadt | `rang` | nur mit dem Zusatz „von N Geschäftslagen“ zeigen |
