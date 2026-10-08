@@ -1,0 +1,49 @@
+# Raster und Distanz
+h3_aufloesung: 9
+puffer_m: 1500
+d_max_m: 1500
+umwegfaktor: 1.3
+d_selbst_m: 100
+h_anwohner_m: 400
+h_tag_m: 250
+h_affinitaet_m: 400
+
+# Nachfrage
+gamma: 1.0
+k_min: 0.5
+k_max: 2.0
+theta: 0.3
+w_buero: 1.0
+w_hochschule: 5.0
+w_bahnhof: 5.0
+w_tram_ubahn: 2.0
+w_bus: 0.5
+q_min: 0.5
+q_max: 1.5
+
+# Wettbewerb
+a_neu: 2.0
+a_0: 1.33
+alpha_markthalle: 3.0
+alpha_bio_markt: 2.0
+alpha_deli: 1.0
+alpha_feinkost_kaese: 1.0
+alpha_wein: 1.0
+alpha_pasta: 1.0
+alpha_reformhaus: 1.0
+alpha_supermarkt: 0.5
+alpha_baecker: 0.2
+alpha_metzger: 0.2
+alpha_obst_gemuese: 0.2
+alpha_fisch: 0.2
+
+# Auswertung
+n_min_geschaeftslage: 5
+profil_schwelle_hoch: 1.5
+profil_schwelle_tief: 0.5
+plausibilitaet_anteil: 0.2
+top_n: 10
+n_laeufe: 1000
+k_portfolio: 5
+n_kandidaten_portfolio: 300
+zufall_startwert: 42

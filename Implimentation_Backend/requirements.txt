@@ -1,0 +1,13 @@
+pandas==3.0
+numpy==2.4
+h3==4.5
+scikit-learn==1.8
+statsmodels==0.15
+pyproj
+pyshp
+shapely
+pyyaml
+streamlit
+pydeck
+requests
+scipy
