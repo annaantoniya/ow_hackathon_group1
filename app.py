@@ -25,13 +25,13 @@ STAEDTE = {"München": "muenchen", "Frankfurt": "frankfurt", "Berlin": "berlin"}
 ERDRADIUS_M = 6_371_000
 ZOOM_STADT = 11.3
 WETTBEWERB_DIREKT = ["deli", "feinkost_kaese", "wein", "bio_markt", "reformhaus", "markthalle", "pasta"]
-ANSICHTEN = ["Konzept", "Karte", "Rangliste", "Vergleich", "Erklärung", "Annahmen"]
+ANSICHTEN = ["Konzept", "Karte", "Analyse", "Rangliste", "Vergleich", "Erklärung", "Annahmen"]
 
 # Farben: Midnight für Struktur, Bright Blue für Bedienung, Sky und Blau für Daten, Coral nur für die Top 10
 MIDNIGHT, BLUE, BRIGHT, SKY, CORAL, GREY = "#0B1B4D", "#002C77", "#2C6EF2", "#009DE0", "#EF4E45", "#6B7079"
-RAMPE_HELL = [(206, 236, 255), (0, 157, 224), (0, 44, 119), (11, 27, 77)]  # dunkel = hoch
+RAMPE_HELL = [(206, 236, 255), (110, 185, 240), (44, 110, 242), (0, 60, 160)]  # helles bis kräftiges Blau, bewusst nicht zu dunkel
 RAMPE_DUNKEL = [(30, 42, 120), (44, 110, 242), (0, 157, 224), (206, 236, 255)]  # auf dunkler Karte: hell = hoch
-NICHT_LAGE_HELL, NICHT_LAGE_DUNKEL = [205, 208, 214], [52, 58, 74]
+NICHT_LAGE_HELL, NICHT_LAGE_DUNKEL = [214, 207, 195], [52, 58, 74]
 CORAL_RGB = [239, 78, 69]
 
 # Ebene -> Spalte. Spalten ohne pr_-Präfix werden in der App in Prozentränge umgerechnet.
@@ -69,10 +69,10 @@ st.set_page_config(page_title="White Spots", layout="wide", initial_sidebar_stat
 # Hell oder Dunkel aus dem Einstellungs-Popover (Zahnrad). Streamlit selbst kann das Theme nicht zur Laufzeit wechseln,
 # deshalb steuern wir Farben, Karte und Diagramme hier selbst.
 DUNKEL = False  # Oberfläche ist immer hell. Nur die Karte ist dunkel, damit die White Spots leuchten.
-KARTE_DUNKEL = True
-FELD_DECKKRAFT = 0.62  # Felder sind durchscheinend, die Straßen darunter bleiben sichtbar
+KARTE_DUNKEL = False
+FELD_DECKKRAFT = 0.6  # Felder sind durchscheinend, die Straßen darunter bleiben sichtbar
 T = {
-    "bg": "#10131A" if DUNKEL else "#F2F3F5",
+    "bg": "#10131A" if DUNKEL else "#F7F3EE",
     "flaeche": "#181C26" if DUNKEL else "#FFFFFF",
     "sidebar": "#141821" if DUNKEL else "#FFFFFF",
     "feld": "#222735" if DUNKEL else "#F2F3F5",
@@ -253,6 +253,26 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .fuss {{ margin-top: 1.4rem; font-size: 0.72rem; color: {T['grau']}; line-height: 1.5; }}
 .st-key-pilotkarte [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stDeckGlJsonChart"], .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] iframe {{ height: 520px !important; }}
 .st-key-pilotkarte .panel {{ height: 520px; }}
+
+/* Analyse: Pipeline und Methodik */
+.pipe {{ display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; margin: 0.4rem 0 0.9rem 0; }}
+.pstep {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; border-top: 3px solid {T['akzent']}; padding: 0.7rem 0.8rem 0.8rem 0.8rem; position: relative; }}
+.pstep:not(:last-child):after {{ content: ""; position: absolute; right: -0.55rem; top: 1.25rem; border-left: 0.45rem solid {T['akzent']}; border-top: 0.3rem solid transparent; border-bottom: 0.3rem solid transparent; z-index: 2; }}
+.pstep .n {{ font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: {T['akzent']}; }}
+.pstep b {{ display: block; font-size: 0.95rem; color: {T['titel']}; margin: 0.15rem 0 0.25rem 0; line-height: 1.2; }}
+.pstep span {{ font-size: 0.78rem; line-height: 1.4; color: {T['text']}; display: block; }}
+.pstep code, .kasten code {{ font-family: ui-monospace, Menlo, monospace; font-size: 0.74rem; background: {T['hover']}; color: {T['titel']} !important; padding: 0.05rem 0.3rem; }}
+.kasten {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; padding: 0.9rem 1.1rem; }}
+.kasten h4 {{ margin: 0 0 0.15rem 0; font-size: 1.05rem; color: {T['titel']}; }}
+.kasten .frage-k {{ font-family: Georgia, serif; font-style: italic; font-size: 0.95rem; color: {T['akzent']}; margin-bottom: 0.5rem; }}
+.kasten ol, .kasten ul {{ margin: 0.2rem 0 0.4rem 0; padding-left: 1.15rem; }}
+.kasten li {{ font-size: 0.84rem; line-height: 1.45; margin-bottom: 0.3rem; color: {T['text']}; }}
+.kasten p {{ font-size: 0.84rem; line-height: 1.45; margin: 0 0 0.45rem 0; color: {T['text']}; }}
+.kasten .schwach {{ border-top: 1px solid {T['rand']}; padding-top: 0.5rem; margin-top: 0.5rem; color: {T['grau']}; font-size: 0.8rem; }}
+.zahlen {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin: 0.9rem 0 0.6rem 0; }}
+.zahl {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; padding: 0.6rem 0.8rem; }}
+.zahl b {{ display: block; font-family: Georgia, serif; font-weight: 400; font-size: 1.7rem; color: {T['titel']}; line-height: 1.1; }}
+.zahl span {{ font-size: 0.74rem; color: {T['grau']}; }}
 
 /* Kopfzeile: Ansichten zum Durchklicken, Linie unter der ganzen Leiste */
 [data-testid="stElementContainer"]:has([data-testid="stButtonGroup"]) {{ width: 100% !important; }}
@@ -511,6 +531,13 @@ def flaeche(schluessel: str, klasse: str, extra: str = "") -> str:
     return f'<div class="{klasse} fallback">{extra}<span>Bild folgt</span></div>'
 
 
+def beige_flaeche():
+    """Halbdurchsichtige Fläche in Beige unter den Feldern, tönt die Basiskarte in das Beige der Seite."""
+    box = [[[0, 40], [30, 40], [30, 60], [0, 60]]]
+    return pdk.Layer("PolygonLayer", [{"p": box[0]}], get_polygon="p", get_fill_color=[247, 243, 238, 120], stroked=False,
+                     pickable=False)
+
+
 def laden_icon() -> dict:
     """Kleines Laden-Symbol (Markise, Schaufenster, Tür) als SVG. Kein Emoji."""
     svg = ('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
@@ -600,7 +627,7 @@ optionen = {f"#{int(r.rang)} {r.lage}": r.h3 for r in top.itertuples()}
 # Optionen der gerade offenen Ansicht in einem Menü
 ebene, nur_lagen, zeige_portfolio, zeige_wettbewerber = "Score", True, False, False
 gewaehlt, wahl = [], None
-if ansicht != "Konzept" and ansicht != "Annahmen":
+if ansicht not in ("Konzept", "Annahmen", "Analyse"):
     with c_opt.popover("Optionen", icon=":material/tune:", use_container_width=True):
         if ansicht == "Karte":
             ebene = st.selectbox("Ebene", list(EBENEN))
@@ -736,6 +763,7 @@ if ansicht == "Konzept":
         else:
             ansicht_pilot = pdk.ViewState(latitude=50.6, longitude=10.8, zoom=5.0, min_zoom=5.0, max_zoom=17)  # Deutschland
         schichten_p = [
+        beige_flaeche(),
             pdk.Layer("IconLayer", sicht, get_icon="icon_data", get_position=["lon", "lat"], get_size=46, size_scale=1, size_min_pixels=40, size_max_pixels=40,
                       pickable=True, id="pilot"),
         ]
@@ -794,8 +822,9 @@ elif ansicht == "Karte":
     nummern = top.copy()
     nummern["text"] = nummern["rang"].astype(int).astype(str)
     schichten = [
+        beige_flaeche(),
         pdk.Layer("H3HexagonLayer", karte, get_hexagon="h3", get_fill_color="farbe",
-                  get_line_color=[255, 255, 255, 40], line_width_min_pixels=0.3,
+                  get_line_color=[0, 60, 160, 85] if not KARTE_DUNKEL else [255, 255, 255, 40], line_width_min_pixels=0.6,
                   extruded=False, opacity=1, pickable=True, id="hex"),
         pdk.Layer("H3HexagonLayer", top, get_hexagon="h3", get_fill_color=[0, 0, 0, 0],
                   get_line_color=CORAL_RGB + [255], stroked=True, filled=False,
@@ -883,6 +912,83 @@ elif ansicht == "Karte":
                       + '<p class="klein" style="margin-top:0.4rem">Zahl rechts: Score-Prozentrang. Ein Feld anklicken zeigt Viertel und Kennzahlen.</p></div>')
     bumper(f"Priorität: {top.iloc[0]['lage']} zuerst prüfen, danach die Standorte mit Konsens-Kennzeichnung.")
     quelle(QUELLE)
+
+# ---------------------------------------------------------------------- Analyse
+elif ansicht == "Analyse":
+    kopf("Analyse", "Zwei unabhängige Methoden bewerten jedes Hexagon, der Konsens beider zeigt die stärksten White Spots")
+    pl = lade_json("muenchen_plausibilitaet.json")
+    lm = lade_json("luecke_modell.json")
+    t_pipe, t_modell, t_abs = st.tabs(["Pipeline", "Modell", "Absicherung"])
+
+    with t_pipe:
+        st.markdown(f"""
+<div class="pipe">
+  <div class="pstep"><div class="n">1 Daten</div><b>Zensus und OpenStreetMap</b><span>Einwohner, Miete, Alter aus dem Zensus 2022. Läden, Cafés, Büros und Haltestellen aus OpenStreetMap. <code>datengrundlage.py</code></span></div>
+  <div class="pstep"><div class="n">2 Raster</div><b>H3-Hexagone</b><span>Stadtgrenze plus 1,5 km Puffer, zerlegt in Zellen von rund 0,1 km². Eine Zeile je Zelle. <code>data/&lt;stadt&gt;_grid.csv</code></span></div>
+  <div class="pstep"><div class="n">3 Nachbarn</div><b>Distanzgewicht</b><span>Alle Zellpaare bis 1,5 km Wegstrecke. Nähe zählt mehr: nach 400 m nur noch die Hälfte.</span></div>
+  <div class="pstep"><div class="n">4 Zwei Sichten</div><b>Score und Lücke</b><span>A: Wie viel Nachfrage gewinnt ein neuer Laden? B: Wo fehlen Läden gemessen am Umfeld?</span></div>
+  <div class="pstep"><div class="n">5 Absicherung</div><b>Tests</b><span>Plausibilität, 1.000 Robustheitsläufe, Portfolio aus fünf Standorten.</span></div>
+  <div class="pstep"><div class="n">6 Plattform</div><b>Diese App</b><span>Liest <code>&lt;stadt&gt;_scored.csv</code>. Ränge, Treiber, Profil, Stabilität. <code>analyse.py</code> schreibt sie.</span></div>
+</div>""", unsafe_allow_html=True)
+        c1, c2 = st.columns(2, gap="medium")
+        c1.markdown(f"""<div class="kasten"><h4>Eingabe</h4><div class="frage-k">Was die Analyse bekommt</div>
+<ul><li><b>Zensus 2022</b> (100-m-Gitter): Einwohner, Nettokaltmiete, Altersgruppen, Haushalte. Die Miete dient als Ersatz für Kaufkraft.</li>
+<li><b>OpenStreetMap</b>: 33 Kategorien in vier Gruppen. Direkte Wettbewerber, breite Wettbewerber, Affinität (Cafés, Bars, Kultur) und Frequenz (Bahnhöfe, Büros, Hochschulen).</li>
+<li>Alle Größen werden am Mittelpunkt ihres Hexagons verortet.</li></ul>
+<div class="schwach">Der Zensus zeigt Mai 2022 und kennt kein Einkommen. Je nach Stadt sind 29 bis 45 Prozent der Mietwerte aus Nachbarzellen geschätzt.</div></div>""", unsafe_allow_html=True)
+        c2.markdown(f"""<div class="kasten"><h4>Ausgabe</h4><div class="frage-k">Was die Plattform bekommt</div>
+<ul><li><b>score, rang, pr_score</b>: Standort-Score und seine Prozentränge.</li>
+<li><b>p_anw, p_tag, w</b>: Potenzial der Anwohner, Potenzial der Tagesbevölkerung und Wettbewerbsfreiheit.</li>
+<li><b>luecke, pr_luecke, konsens</b>: Angebotslücke und Kennzeichnung, wenn beide Sichten vorn liegen.</li>
+<li><b>profil</b>: Mittags-, Feierabend- oder Ganztagsstandort.</li>
+<li><b>top10_anteil</b>: Wie oft ein Standort in 1.000 Läufen unter den Top 10 war.</li></ul>
+<div class="schwach">Alles ist reproduzierbar: fester Zufallsstartwert 42, jedes Skript liefert bei gleicher Eingabe dasselbe Ergebnis.</div></div>""", unsafe_allow_html=True)
+
+    with t_modell:
+        a, b = st.columns(2, gap="medium")
+        a.markdown(f"""<div class="kasten"><h4>Sicht A: Der Score</h4><div class="frage-k">Wie viel passende Nachfrage würde ein neuer Laden hier gewinnen?</div>
+<ol><li><b>Nachfrage der Anwohner.</b> Einwohner mal Anteil der 20- bis 49-Jährigen mal Kaufkraftfaktor aus der Miete.</li>
+<li><b>Tagesbevölkerung.</b> Ein Index aus Bahnhöfen, Büros, Hochschulen und Haltestellen, weil es keine Personenzahlen gibt.</li>
+<li><b>Affinität.</b> Ein Faktor für das Umfeld (Cafés, Restaurants, Bars, Kultur), gebildet mit einer Hauptkomponentenanalyse.</li>
+<li><b>Potenzial P.</b> Nachfrage, die ein Laden ohne jeden Wettbewerb gewinnen würde. Wer 400 m entfernt wohnt, zählt halb.</li>
+<li><b>Wettbewerb.</b> Das Huff-Modell verteilt die Nachfrage auf alle Läden in Reichweite. Markthalle zählt 3, Bio-Markt 2, Feinkost 1, Supermarkt 0,5, Bäcker 0,2.</li>
+<li><b>Score U = P mal W.</b> W ist der Anteil, den der Wettbewerb übrig lässt, und liegt zwischen 0 und 1.</li></ol>
+<div class="schwach">Diese Zerlegung liefert zugleich die Erklärung: gut wegen hohem Potenzial, wenig Wettbewerb oder beidem. Alle Parameter sind Setzungen ohne Messung.</div></div>""", unsafe_allow_html=True)
+        b.markdown(f"""<div class="kasten"><h4>Sicht B: Die Angebotslücke</h4><div class="frage-k">Wo gibt es weniger Läden, als das Umfeld erwarten lässt?</div>
+<ol><li><b>Zielgröße.</b> Zahl der direkten Wettbewerber je Zelle (Deli, Feinkost, Bio, Markthalle, Wein, Pasta).</li>
+<li><b>Fünf Merkmale</b> je Stadt standardisiert: Einwohner, Kaufkraft, Alter, Affinität, Tagesbevölkerung im Umfeld.</li>
+<li><b>Regression.</b> Drei Modelle werden verglichen: Poisson, negativ-binomial und negativ-binomial mit räumlichem Effekt. Das mit der kleinsten Test-Devianz gewinnt.</li>
+<li><b>Lücke g.</b> Erwartete minus vorhandene Läden, über die Laufweite geglättet. Positiv heißt: es fehlen Läden.</li>
+<li><b>Konsens.</b> Ein Standort ist Konsens, wenn Score und Lücke beide im obersten Zehntel liegen (Prozentrang mindestens 90).</li></ol>
+<div class="schwach">Die Gewichte kommen aus den Daten statt aus unseren Setzungen. Die Schwäche: Das Modell lernt, wo Läden stehen, nicht, wo sie sich lohnen.</div></div>""", unsafe_allow_html=True)
+        if lm:
+            gewaehlt_m = lm.get("variante", "–").replace("_", "-")
+            koef = lm.get("koeffizienten", {})
+            st.markdown(f"""<div class="zahlen">
+<div class="zahl"><b>{lm.get("erklaerte_devianz_ausserhalb", 0) * 100:.0f} %</b><span>der Ladenverteilung erklärt, außerhalb der Stichprobe getestet</span></div>
+<div class="zahl"><b>{escape(gewaehlt_m)}</b><span>gewähltes Modell. Poisson hätte {lm["test_devianz"]["poisson"]:.0f} Test-Devianz, gewählt wurde {lm["test_devianz"]["negativ_binomial"]:.0f}</span></div>
+<div class="zahl"><b>+{koef.get("einwohner", 0):.2f}</b><span>Koeffizient Einwohner im Umfeld, der stärkste Treiber</span></div>
+<div class="zahl"><b>{koef.get("alter", 0):+.2f}</b><span>Koeffizient Alter. Das Vorzeichen ist unerwartet negativ und wird berichtet, nicht korrigiert</span></div>
+</div>""", unsafe_allow_html=True)
+
+    with t_abs:
+        c1, c2, c3 = st.columns(3, gap="medium")
+        anteil = f"{pl['anteil_pois_in_top_zellen'] * 100:.0f} %" if pl else "–"
+        c1.markdown(f"""<div class="kasten"><h4>Plausibilitätstest</h4><div class="frage-k">Sagt das Potenzial voraus, wo heute Feinkostläden stehen?</div>
+<div class="gross" style="font-size:2.4rem">{anteil}</div>
+<p>der direkten Wettbewerber liegen in den 20 Prozent Zellen mit dem höchsten Potenzial. Ohne Vorhersagekraft wären es 20 Prozent (Stand: München).</p>
+<p>Der Test ist nicht zirkulär: Wettbewerber gehen weder in die Nachfrage noch in die Affinität ein.</p></div>""", unsafe_allow_html=True)
+        c2.markdown(f"""<div class="kasten"><h4>Robustheit</h4><div class="frage-k">Wie stark hängt die Rangfolge an unseren Setzungen?</div>
+<p>Alle Parameter werden bis zu 1.000 Mal innerhalb plausibler Spannen zufällig verändert, etwa die Reichweiten, der Tagesanteil und die Wettbewerbsgewichte.</p>
+<p>Je Zelle zählt, wie oft sie unter den Top 10 landet. Ab 70 Prozent heißt <b>sicherer Kandidat</b>, unter 30 Prozent <b>wackeliger Kandidat</b>. Das steht in Rangliste und Erklärung.</p></div>""", unsafe_allow_html=True)
+        c3.markdown(f"""<div class="kasten"><h4>Portfolio</h4><div class="frage-k">Welche fünf Standorte ergänzen sich?</div>
+<p>Ein gieriges Verfahren wählt Schritt für Schritt den Standort, der die gemeinsam gewonnene Nachfrage am meisten erhöht. Standorte, die sich gegenseitig Kunden wegnehmen, fallen heraus.</p>
+<p>Das Verfahren erreicht mindestens 63 Prozent des Optimums, weil die Zielfunktion submodular ist.</p></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="kasten" style="margin-top:0.7rem"><h4>Was das Modell nicht kann</h4>
+<ul><li>Es kennt keine Umsätze und ist nicht kalibriert. Der Score ordnet Standorte, er sagt keinen Umsatz voraus.</li>
+<li>Die Tagesbevölkerung ist ein Index, keine Personenzahl. Distanzen sind Luftlinie mal 1,3, Flüsse und Bahntrassen zählen nicht als Hindernis.</li>
+<li>OpenStreetMap ist nicht überall gleich vollständig, und Ladengröße und Qualität sind unbekannt.</li></ul></div>""", unsafe_allow_html=True)
+    quelle(QUELLE + " Methodik: Specs/maths.md, Umsetzung: analyse.py.")
 
 # ------------------------------------------------------------------- Rangliste
 elif ansicht == "Rangliste":
