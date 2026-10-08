@@ -156,17 +156,6 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .st-key-rk_karte, .st-key-rk_pilot {{ height: 0; position: relative; z-index: 30; overflow: visible; }}
 .st-key-rk_karte [data-testid="stHorizontalBlock"], .st-key-rk_pilot [data-testid="stHorizontalBlock"] {{ padding: 0.55rem 0 0 0.55rem; }}
 .st-key-rk_karte button, .st-key-rk_pilot button {{ min-height: 2.1rem; font-size: 0.82rem; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25); }}
-.sbraster {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.7rem; margin-top: 0.6rem; }}
-.sb {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; border-top: 3px solid {T['akzent']}; padding: 0.7rem 0.8rem; font-size: 0.8rem; }}
-.sbkopf {{ display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem; }}
-.sbkopf b {{ display: block; color: {T['titel']}; font-size: 0.95rem; line-height: 1.2; }}
-.sbkopf small {{ color: {T['grau']}; font-size: 0.72rem; }}
-.sb .kern {{ margin: 0.5rem 0 0.3rem 0; font-weight: 600; color: {T['titel']}; line-height: 1.35; }}
-.sb ul {{ list-style: none; padding: 0; margin: 0 0 0.4rem 0; }}
-.sb li {{ padding-left: 1rem; position: relative; margin-bottom: 0.3rem; line-height: 1.35; }}
-.sb li:before {{ position: absolute; left: 0; font-weight: 800; }}
-.sb li.plus:before {{ content: "+"; color: #1E8E50; }} .sb li.minus:before {{ content: "–"; color: #C0392B; }}
-.sb .fuss2 {{ border-top: 1px solid {T['rand']}; padding-top: 0.4rem; margin: 0; line-height: 1.4; color: {T['text']}; }}
 .vkopf {{ font-family: Georgia, serif; font-size: 1.25rem; color: {T['titel']}; margin: 1.5rem 0 0.5rem 0; border-bottom: 1px solid {T['rand']}; padding-bottom: 0.25rem; }}
 .vkopf .klein {{ font-family: Arial, sans-serif; font-size: 0.78rem; color: {T['grau']}; margin-left: 0.6rem; }}
 .hinweisbox {{ background: #CEECFF; color: {MIDNIGHT}; padding: 0.6rem 1rem; font-size: 0.86rem; margin: 0.2rem 0 0.4rem 0; }}
@@ -300,7 +289,6 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .frage {{ border-left: 4px solid {T['akzent']}; padding: 0.2rem 0 0.2rem 1rem; margin: 1.4rem 0 0.8rem 0; font-weight: 700; color: {T['titel']}; font-size: 1.05rem; line-height: 1.4; max-width: 56rem; }}
 .frage small {{ display: block; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.68rem; color: {T['akzent']}; margin-bottom: 0.2rem; }}
 .fuss {{ margin-top: 1.4rem; font-size: 0.72rem; color: {T['grau']}; line-height: 1.5; }}
-.st-key-vglkarte [data-testid="stFullScreenFrame"], .st-key-vglkarte [data-testid="stElementContainer"], .st-key-vglkarte [data-testid="stDeckGlJsonChart"], .st-key-vglkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-vglkarte [data-testid="stDeckGlJsonChart"] iframe {{ height: 300px !important; max-height: 300px !important; min-height: 0 !important; }}
 .st-key-pilotkarte [data-testid="stFullScreenFrame"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stDeckGlJsonChart"], .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] iframe {{ height: 520px !important; }}
 .st-key-pilotkarte .panel {{ height: 520px; }}
 
@@ -716,8 +704,7 @@ def pilotstandorte():
 from types import SimpleNamespace  # noqa: E402
 
 H_METHODIK = SimpleNamespace(kopf=kopf, exhibit_titel=exhibit_titel, bumper=bumper, quelle=quelle, theme_chart=theme_chart,
-                             tabelle=tabelle, viertel=viertel, lagebezeichnung=lagebezeichnung, lade_pois=lade_pois, in_der_naehe=in_der_naehe,
-                             karte_style=T["karte"], QUELLE="Quellen: OpenStreetMap-Mitwirkende, Statistisches Bundesamt (Zensus 2022).")
+                             tabelle=tabelle, QUELLE="Quellen: OpenStreetMap-Mitwirkende, Statistisches Bundesamt (Zensus 2022).")
 
 # Kopfzeile: Ansichten zum Durchklicken, Stadt, und Optionen der Ansicht. Keine Seitenleiste.
 with st.container(key="topbar"):
@@ -1087,7 +1074,8 @@ elif ansicht == "Rangliste":
 
 # --------------------------------------------------------------------- Vergleich
 elif ansicht == "Vergleich":
-    vergleich.ansicht(SimpleNamespace(**vars(H_METHODIK), FARBEN=["#0B1B4D", "#2C6EF2", "#009DE0", "#8DB4FF", "#9AA0AB"]))
+    vergleich.ansicht(SimpleNamespace(**vars(H_METHODIK), lagebezeichnung=lagebezeichnung, lade_pois=lade_pois, viertel=viertel,
+                                      FARBEN=["#0B1B4D", "#2C6EF2", "#009DE0", "#8DB4FF", "#9AA0AB"]))
 
 # ---------------------------------------------------------------------- Erklärung
 elif ansicht == "Erklärung":
