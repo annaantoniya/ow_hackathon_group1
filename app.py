@@ -188,8 +188,8 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .w-intro-zeile p {{ margin: 0; padding: 1.2rem 2rem 1.3rem 0; font-size: 1rem; line-height: 1.65; color: {T['text']}; max-width: 54rem; }}
 .w-intro-zeile .l {{ border-left: 1px solid {T['titel']}; display: flex; align-items: center; justify-content: center; }}
 .w-intro-zeile img {{ width: 4.4rem; height: 4.4rem; border-radius: 50%; }}
-.w-split {{ display: grid; grid-template-columns: 1.45fr 1fr; min-height: 540px; margin-top: 0.8rem; }}
-.w-split .bild {{ background-size: cover; background-position: center 10%; position: relative; }}
+.w-split {{ display: grid; grid-template-columns: 1.3fr 1fr; min-height: 580px; margin-top: 0.8rem; }}
+.w-split .bild {{ background-size: cover; background-position: center top; position: relative; }}
 .w-split .text {{ background: {MIDNIGHT}; color: #FFFFFF; padding: 2.2rem 2.6rem; display: flex; flex-direction: column; justify-content: center; }}
 .w-kicker {{ font-size: 0.74rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8E9AC2; }}
 .w-marke {{ font-family: Georgia, "Times New Roman", serif; font-size: 5rem; line-height: 1; letter-spacing: 0.08em; margin: 0.6rem 0 0.4rem 0; color: #FFFFFF; }}
@@ -210,11 +210,11 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .w-kopf .w-t {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 2.2rem !important; line-height: 1.1; letter-spacing: -0.01em; margin: 0; color: {T['titel']} !important; }}
 .w-kopf > span {{ font-size: 0.86rem; color: {T['grau']}; text-align: right; max-width: 28rem; }}
 .w-promos {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }}
-.w-promo {{ display: grid; grid-template-columns: 0.8fr 1.3fr; min-height: 400px; color: #FFFFFF; }}
+.w-promo {{ display: grid; grid-template-columns: 0.8fr 1.3fr; min-height: 500px; color: #FFFFFF; }}
 .w-promo .t {{ padding: 1.6rem 1.4rem; display: flex; flex-direction: column; justify-content: center; }}
 .w-promo h3 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.85rem; line-height: 1.15; color: #CEECFF; margin: 0; }}
 .w-promo p {{ font-size: 0.94rem; line-height: 1.55; margin: 0; color: #FFFFFF; }}
-.w-promo .b {{ background-size: cover; background-position: center 22%; position: relative; }}
+.w-promo .b {{ background-size: cover; background-position: center 15%; position: relative; }}
 .w-badge {{ position: absolute; top: 1rem; right: 1rem; width: 6rem; height: 6rem; border-radius: 50%; background: #CEECFF; color: {MIDNIGHT}; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: Georgia, "Times New Roman", serif; line-height: 1.05; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25); }}
 .w-badge b {{ font-size: 1.35rem; font-weight: 400; display: block; }}
 .w-badge span {{ font-size: 0.95rem; font-style: italic; display: block; }}
@@ -310,6 +310,18 @@ def lade_pois(key: str):
     t = pd.read_csv(p)
     t = t[t["kategorie"].isin(["bahnhof", "tram_ubahn"]) & t["name"].notna()]
     return t[["lat", "lon", "name"]].reset_index(drop=True)
+
+
+@st.cache_data
+def lade_wettbewerber(key: str):
+    """Direkte Wettbewerber (Deli, Feinkost, Bio, Markthalle ...) als Punkte für die Karte. Ohne Datei gibt es None."""
+    p, _ = pfad(key, f"{key}_pois.csv")
+    if p is None:
+        return None
+    t = pd.read_csv(p)
+    t = t[t["gruppe"] == "wettbewerb_direkt"]
+    t["name"] = t["name"].fillna("(ohne Namen)")
+    return t[["lat", "lon", "name", "kategorie"]].reset_index(drop=True)
 
 
 @st.cache_data
@@ -589,7 +601,7 @@ n_konsens = int(top["konsens"].sum())
 optionen = {f"#{int(r.rang)} {r.lage}": r.h3 for r in top.itertuples()}
 
 # Optionen der gerade offenen Ansicht in einem Menü neben den Einstellungen
-ebene, nur_lagen, zeige_portfolio = "Score", True, False
+ebene, nur_lagen, zeige_portfolio, zeige_wettbewerber = "Score", True, False, False
 gewaehlt, wahl = [], None
 if ansicht != "Konzept" and ansicht != "Annahmen":
     with c_opt.popover("Optionen", icon=":material/tune:", use_container_width=True):
@@ -597,6 +609,8 @@ if ansicht != "Konzept" and ansicht != "Annahmen":
             ebene = st.selectbox("Ebene", list(EBENEN))
             nur_lagen = st.toggle("Nur Geschäftslagen", value=True)
             zeige_portfolio = st.toggle("Portfolio zeigen", value=False)
+            zeige_wettbewerber = st.toggle("Wettbewerber zeigen", value=False,
+                                           help="Direkte Wettbewerber aus OpenStreetMap: Deli, Feinkost, Bio-Markt, Markthalle, Wein, Pasta.")
             if "rang_gemeinsam" in df.columns:
                 st.radio("Maßstab", ["Innerhalb der Stadt", "Gemeinsam über alle drei"])
         elif ansicht == "Vergleich":
@@ -793,6 +807,15 @@ elif ansicht == "Karte":
                   get_color=[255, 255, 255, 255], get_background_color=[44, 110, 242, 255], background=True,
                   background_padding=[5, 3]),
     ]
+    if zeige_wettbewerber:
+        wb = lade_wettbewerber(key)
+        if wb is None:
+            st.info("Für diese Stadt liegen keine Wettbewerber-Daten vor.")
+        else:
+            schichten.append(pdk.Layer("ScatterplotLayer", wb, get_position=["lon", "lat"], get_radius=30, radius_min_pixels=3,
+                                       radius_max_pixels=9, get_fill_color=[255, 255, 255, 235] if DUNKEL else [11, 27, 77, 235],
+                                       get_line_color=[11, 27, 77, 255] if DUNKEL else [255, 255, 255, 255], stroked=True,
+                                       line_width_min_pixels=1))
     if zeige_portfolio:
         port = lade_portfolio(key)
         if port is None:
