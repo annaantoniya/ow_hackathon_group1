@@ -60,8 +60,8 @@ PARAMETER = {
     # k_min und k_max sind keine festen Werte, sondern das 5- und 95-%-Quantil von Miete/Median
     # in der jeweiligen Stadt (siehe kaufkraft_grenzen). theta = Anteil der Tagesbevölkerung.
     "gamma": 1.0, "k_quantil_unten": 0.05, "k_quantil_oben": 0.95, "theta": 0.6,
-    # Frequenzgewichte absteigend: Bahnhof > Büro > Hochschule > Tram/U-Bahn > Bus.
-    "w_bahnhof": 5.0, "w_buero": 4.0, "w_hochschule": 3.0, "w_tram_ubahn": 2.0, "w_bus": 1.0,
+    # Frequenzgewichte absteigend: Büro > Hochschule > Bahnhof = Tram/U-Bahn > Bus.
+    "w_bahnhof": 2.0, "w_buero": 4.0, "w_hochschule": 3.0, "w_tram_ubahn": 2.0, "w_bus": 1.0,
     "q_min": 0.5, "q_max": 1.5,
     # Wettbewerb. a_0 = 1,33 heißt: ohne Wettbewerb gewinnt der Laden direkt vor der Tür
     # (Distanz d_selbst) rund 60 Prozent der Nachfrage: 2*2^(-100/400) / (2*2^(-100/400) + 1,33).
@@ -97,7 +97,7 @@ WETTBEWERB_BREIT = ["supermarkt", "obst_gemuese", "metzger", "baecker", "fisch"]
 AFFINITAET = ["cafe", "restaurant", "bar", "buchhandlung", "interior", "boutique", "blumen",
               "fitness_yoga", "kultur", "galerie_museum", "coworking", "fahrradladen"]
 # Reihenfolge = Rangfolge der Gewichte, absteigend. Der Robustheitstest hält sie ein.
-FREQUENZ = ["bahnhof", "buero", "hochschule", "tram_ubahn", "bus"]
+FREQUENZ = ["buero", "hochschule", "bahnhof", "tram_ubahn", "bus"]
 ALLE_KATEGORIEN = WETTBEWERB_DIREKT + WETTBEWERB_BREIT + AFFINITAET + FREQUENZ
 MERKMALE = ["einwohner", "kaufkraft", "alter", "affinitaet", "tag"]
 
@@ -601,7 +601,7 @@ def ziehe_parameter(p: dict, rng: np.random.Generator) -> dict:
     for k, (art, a, b) in SPANNEN.items():
         neu[k] = rng.uniform(a, b) if art == "wert" else p[k] * rng.uniform(a, b)
     # Die gezogenen Frequenzgewichte werden absteigend neu verteilt, damit die Rangfolge
-    # Bahnhof > Büro > Hochschule > Tram/U-Bahn > Bus in jedem Lauf gilt.
+    # Büro > Hochschule > Bahnhof >= Tram/U-Bahn > Bus in jedem Lauf gilt.
     gewichte = sorted((neu[f"w_{c}"] for c in FREQUENZ), reverse=True)
     neu.update({f"w_{c}": w for c, w in zip(FREQUENZ, gewichte)})
     return neu
