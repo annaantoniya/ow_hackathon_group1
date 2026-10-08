@@ -31,7 +31,7 @@ INTRO_TEXT = ("OLIVE ist ein urbaner Supermarkt mit Deli-Theke. Tagsüber holen 
 USPS = [
     ("phone", "Bezahlen per App", "Einchecken, mitnehmen, fertig. Es gibt keine Kasse."),
     ("clock", "Keine Warteschlange", "Auch zur Stoßzeit ohne Anstehen."),
-    ("moon", "Bis spät frisch", "Brot und Pastries auch am Abend."),
+    ("moon", "Bis spät frisch", "Frisches Brot und Gebäck auch abends."),
     ("bag", "Lieferung", "Über Plattformen, ohne eigene Fahrer."),
     ("leaf", "Vegan und vegetarisch", "Große pflanzliche Auswahl."),
 ]
