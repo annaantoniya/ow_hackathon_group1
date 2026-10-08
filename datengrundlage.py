@@ -50,7 +50,7 @@ Ausgaben
     anteil_20_49      Anteil der 20- bis 49-Jährigen
     alter_geschaetzt  True, wenn der Stadtwert eingesetzt wurde
     haushalte         Zahl der Haushalte
-    anteil_hh_1_2     Anteil der Haushalte mit einer oder zwei Personen
+    anteil_hh_1_3     Anteil der Haushalte mit einer bis drei Personen
     poi_<kategorie>   Anzahl POIs je Kategorie (33 Spalten)
 
 Laufzeit beim ersten Start: Download wenige Minuten, Zensus je Stadt rund eine Minute,
@@ -349,17 +349,17 @@ def zensus_auf_hexagone(hexa: pd.DataFrame, gebiet: shapely.Geometry) -> pd.Data
     # Unbewohnte Zellen tragen nichts bei; die Markierung "geschätzt" wäre dort irreführend.
     df.loc[df["einwohner"] == 0, "alter_geschaetzt"] = False
 
-    # Haushalte: gleiche Logik. Trennt kaum (75-80 % klein), geht nicht in den Score ein.
+    # Haushalte: gleiche Logik. Der Anteil mit 1 bis 3 Personen geht in die Anwohnernachfrage ein.
     hh = lese_zensus("haushalte", gebiet, zellen)
     hk = ZENSUS_SPALTEN["haushalte"][1:]
     h = hh.groupby("h3")[["Insgesamt_Haushalte", *hk]].sum(min_count=1)
-    klein = h[["1_Person", "2_Personen"]].sum(axis=1)
+    klein = h[["1_Person", "2_Personen", "3_Personen"]].sum(axis=1)
     alle_hh = h[hk].sum(axis=1)
     hh_stadt = klein.reindex(stadtzellen).sum() / alle_hh.reindex(stadtzellen).sum()
     df["haushalte"] = h["Insgesamt_Haushalte"].reindex(df.index).fillna(0)
-    df["anteil_hh_1_2"] = (klein / alle_hh.replace(0, np.nan)).reindex(df.index)
+    df["anteil_hh_1_3"] = (klein / alle_hh.replace(0, np.nan)).reindex(df.index)
     hh_deckung = alle_hh.reindex(df.index) / df["haushalte"].replace(0, np.nan)
-    df.loc[~(hh_deckung >= 0.5), "anteil_hh_1_2"] = hh_stadt
+    df.loc[~(hh_deckung >= 0.5), "anteil_hh_1_3"] = hh_stadt
 
     return df.reset_index()
 
@@ -598,7 +598,7 @@ def baue_stadt(stadt: str, mit_osm: bool) -> pd.DataFrame:
     grid = zaehle_pois(grid, pois)
 
     spalten = ["h3", "lat", "lon", "stadt", "in_stadt", "einwohner", "miete_qm", "mietwohnungen",
-               "miete_geschaetzt", "anteil_20_49", "alter_geschaetzt", "haushalte", "anteil_hh_1_2",
+               "miete_geschaetzt", "anteil_20_49", "alter_geschaetzt", "haushalte", "anteil_hh_1_3",
                *[f"poi_{k}" for k in KATEGORIEN]]
     grid = grid[spalten].sort_values("h3").reset_index(drop=True)
     grid.to_csv(DATA / f"{stadt}_grid.csv", index=False, float_format="%.6g")
