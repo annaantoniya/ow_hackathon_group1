@@ -176,6 +176,8 @@ table.vgl th.z small {{ display: block; font-weight: 400; color: {T['grau']}; fo
 table.vgl td {{ padding: 0.5rem 0.9rem; border-bottom: 1px solid {T['rand']}; color: {T['titel']}; font-weight: 600; vertical-align: top; }}
 table.vgl td.ph {{ color: {T['grau']}; font-weight: 400; font-style: italic; }}
 table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['hover']}; }}
+.nah {{ display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.84rem; padding: 0.3rem 0; border-bottom: 1px solid {T['rand']}; }}
+.nah i {{ font-style: normal; color: {T['grau']}; white-space: nowrap; }}
 .statraster {{ display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 0.9rem; }}
 .stat {{ border-top: 1px solid {T['rand']}; padding-top: 0.35rem; }}
 .stat span {{ display: block; font-size: 0.72rem; color: {T['grau']}; }}
@@ -219,10 +221,10 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .zm {{ overflow: hidden; position: relative; }}
 .zm::before {{ content: ""; position: absolute; inset: 0; background-image: inherit; background-size: cover; background-position: inherit; transform: scale(var(--z, 1.25)); transform-origin: var(--o, center); }}
 .w-split .bild.zm {{ --z: 1; --o: 40% 15%; }}
-.w-promo .b.zm {{ --z: 1.05; --o: 55% 25%; }}
-.w-card.slim .b.zm {{ --z: 1.05; }}
-.w-card .b.zm {{ --z: 1.02; }}
-.review .foto.zm {{ --z: 1.05; --o: 50% 0%; }}
+.w-promo .b.zm {{ --z: 1; --o: 55% 25%; }}
+.w-card.slim .b.zm {{ --z: 1; }}
+.w-card .b.zm {{ --z: 1; }}
+.review .foto.zm {{ --z: 1; --o: 50% 0%; }}
 .w-split .bild {{ background-size: cover; background-position: center top; position: relative; }}
 .w-split .text {{ background: {MIDNIGHT}; color: #FFFFFF; padding: 2.2rem 2.6rem; display: flex; flex-direction: column; justify-content: center; }}
 .w-kicker {{ font-size: 0.74rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8E9AC2; }}
@@ -254,7 +256,7 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .w-badge span {{ font-size: 0.95rem; font-style: italic; display: block; }}
 .w-cards {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }}
 .w-card {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; }}
-.w-card .b {{ height: auto; aspect-ratio: 21 / 8; background-size: cover; background-position: center; position: relative; }}
+.w-card .b {{ height: auto; aspect-ratio: 16 / 10; background-size: cover; background-position: center; position: relative; }}
 .w-card .b span {{ position: absolute; left: 0; bottom: 0; background: {MIDNIGHT}; color: #fff; padding: 0.3rem 0.9rem; font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; }}
 .w-cards.deli {{ grid-template-columns: repeat(6, 1fr); gap: 1rem; }}
 .w-card.slim .b {{ height: auto; aspect-ratio: 1 / 0.8; background-position: center 45%; }}
@@ -270,7 +272,7 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .w-logos div {{ background: #FFFFFF; border: 1px solid {T['rand']}; border-radius: 14px; display: flex; align-items: center; justify-content: center; height: 4.6rem; padding: 0.6rem 0.8rem; }}
 .w-logos img {{ max-height: 2.2rem; max-width: 100%; object-fit: contain; }}
 .review {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; padding: 1.1rem 1.2rem 1rem 1.2rem; display: flex; flex-direction: column; }}
-.review .foto {{ height: auto; aspect-ratio: 16 / 8; background-size: cover; background-position: center 20%; margin: -1.1rem -1.2rem 0.9rem -1.2rem; }}
+.review .foto {{ height: auto; aspect-ratio: 16 / 10; background-size: cover; background-position: center 20%; margin: -1.1rem -1.2rem 0.9rem -1.2rem; }}
 .review .kopfzeile {{ display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.7rem; }}
 .review .avatar {{ flex: none; width: 3.2rem; height: 3.2rem; border-radius: 50%; background: #CEECFF; color: {MIDNIGHT}; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background-size: cover; background-position: center; }}
 .review .wer b {{ display: block; color: {T['titel']}; font-size: 0.98rem; }}
@@ -284,7 +286,7 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .frage {{ border-left: 4px solid {T['akzent']}; padding: 0.2rem 0 0.2rem 1rem; margin: 1.4rem 0 0.8rem 0; font-weight: 700; color: {T['titel']}; font-size: 1.05rem; line-height: 1.4; max-width: 56rem; }}
 .frage small {{ display: block; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.68rem; color: {T['akzent']}; margin-bottom: 0.2rem; }}
 .fuss {{ margin-top: 1.4rem; font-size: 0.72rem; color: {T['grau']}; line-height: 1.5; }}
-.st-key-pilotkarte [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stDeckGlJsonChart"], .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] iframe {{ height: 520px !important; }}
+.st-key-pilotkarte [data-testid="stFullScreenFrame"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stDeckGlJsonChart"], .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] iframe {{ height: 520px !important; }}
 .st-key-pilotkarte .panel {{ height: 520px; }}
 
 /* Analyse: Pipeline und Methodik */
@@ -319,7 +321,7 @@ section[data-testid="stSidebar"] [data-testid^="stBaseButton"]:not([data-testid=
 [data-testid="stPopoverBody"] {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; }}
 [data-testid="stPopoverBody"] * {{ color: {T['text']}; }}
 /* Karte füllt den Arbeitsbereich */
-[data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stDeckGlJsonChart"], [data-testid="stDeckGlJsonChart"] > div, [data-testid="stDeckGlJsonChart"] iframe {{ height: calc({KOERPER} - 3.1rem) !important; max-height: calc({KOERPER} - 3.1rem) !important; min-height: 0 !important; overflow: hidden; }}
+[data-testid="stFullScreenFrame"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stDeckGlJsonChart"], [data-testid="stDeckGlJsonChart"] > div, [data-testid="stDeckGlJsonChart"] iframe {{ height: calc({KOERPER} - 3.1rem) !important; max-height: calc({KOERPER} - 3.1rem) !important; min-height: 0 !important; overflow: hidden; }}
 {CSS_DUNKEL if DUNKEL else ""}
 </style>
 """, unsafe_allow_html=True)
@@ -399,10 +401,22 @@ def lade_parameter():
         return None
 
 
-@st.cache_data(show_spinner=False)
+VIERTEL_DATEI = Path(__file__).parent / "assets" / "viertel_cache.json"
+
+
 def viertel(lat: float, lon: float):
-    """Viertel und Bezirk zu einer Koordinate über Nominatim (OpenStreetMap). Ohne Netz gibt es None."""
+    """Viertel und Bezirk zu einer Koordinate über Nominatim (OpenStreetMap). Antworten liegen in assets/viertel_cache.json,
+    damit die Demo ohne Netz läuft. Ohne Netz und ohne Eintrag gibt es None."""
+    import time
     import urllib.request
+    schluessel = f"{lat:.4f},{lon:.4f}"
+    try:
+        cache = json.loads(VIERTEL_DATEI.read_text(encoding="utf-8"))
+    except Exception:
+        cache = {}
+    if schluessel in cache:
+        v = cache[schluessel]
+        return tuple(v) if v else None
     url = f"https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&addressdetails=1&accept-language=de&lat={lat:.5f}&lon={lon:.5f}"
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "olive-whitespot-hackathon/1.0"})
@@ -411,7 +425,28 @@ def viertel(lat: float, lon: float):
         return None
     teil = a.get("suburb") or a.get("neighbourhood") or a.get("quarter") or a.get("city_district") or a.get("town") or a.get("village")
     bezirk = a.get("city_district") if a.get("city_district") != teil else a.get("borough")
-    return (teil, bezirk) if teil else None
+    erg = (teil, bezirk) if teil else None
+    cache[schluessel] = list(erg) if erg else None
+    try:
+        VIERTEL_DATEI.write_text(json.dumps(cache, ensure_ascii=False, indent=0), encoding="utf-8")
+    except Exception:
+        pass
+    time.sleep(1.1)  # Nominatim erlaubt höchstens eine Anfrage pro Sekunde
+    return erg
+
+
+@st.cache_data(show_spinner=False)
+def in_der_naehe(key_: str, lat: float, lon: float, n: int = 3, radius_m: int = 700):
+    """Die nächsten benannten Orte: Bahnhöfe, Haltestellen, Hochschulen und Kultur im Umkreis. Liefert (Name, Entfernung in m)."""
+    p_, _ = pfad(key_, f"{key_}_pois.csv")
+    if p_ is None:
+        return []
+    t = pd.read_csv(p_)
+    t = t[t["kategorie"].isin(["bahnhof", "tram_ubahn", "hochschule", "kultur", "galerie_museum"]) & t["name"].notna()]
+    dy = (t["lat"] - lat) * 111_000
+    dx = (t["lon"] - lon) * 111_000 * np.cos(np.radians(lat))
+    t = t.assign(d=np.hypot(dx, dy)).query("d <= @radius_m").sort_values("d").drop_duplicates("name")
+    return [(r["name"], int(round(r["d"], -1))) for _, r in t.head(n).iterrows()]
 
 
 def lagebezeichnung(zeile, pois) -> str:
@@ -700,7 +735,7 @@ def karten_leiste(callback_reset, key_: str):
     if voll:  # Karte füllt die Seite, Seitenleiste ausgeblendet
         st.markdown("""<style>
         section[data-testid="stSidebar"], [data-testid="stExpandSidebarButton"] { display: none !important; }
-        [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stDeckGlJsonChart"],
+        [data-testid="stFullScreenFrame"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stDeckGlJsonChart"],
         [data-testid="stDeckGlJsonChart"] > div, [data-testid="stDeckGlJsonChart"] iframe,
         .st-key-pilotkarte [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stDeckGlJsonChart"],
         .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] iframe { height: calc(100vh - 17rem) !important; max-height: calc(100vh - 17rem) !important; }
@@ -786,14 +821,11 @@ if ansicht == "Konzept":
 <div class="w-kopf"><div class="w-t">Unsere Angebote</div><span>Italienisch, mediterran, französisch, frisch zum Mitnehmen und gesund</span></div>
 <div class="w-cards deli">{sortiment}</div>
 
-<div class="w-kopf"><div class="w-t">Drei Städte, drei Hypothesen</div><span>Was jede Stadt dem Modell abverlangt</span></div>
-<div class="w-cards">{staedte}</div>
-
-<div class="w-kopf"><div class="w-t">Zielgruppen</div><span>Drei fiktive Personas, die unsere Datenwahl begründen</span></div>
-<div class="w-cards">{personas}</div>
+<div class="w-kopf"><div class="w-t">Drei Städte, drei Zielgruppen</div><span>Jede Stadt stellt dem Modell eine eigene Frage, jede Persona begründet unsere Datenwahl</span></div>
+<div class="w-cards">{staedte}{personas}</div>
 
 <div class="w-kopf"><div class="w-t">Lieferung</div><span>Mögliche Partner</span></div>
-<div class="w-liefer"><div><p>{escape(K.LIEFERUNG_TEXT)}</p><small>{escape(K.LIEFERUNG_HINWEIS)}</small></div><div class="w-logos">{logos}</div></div>
+<div class="w-liefer"><div><p>{escape(K.LIEFERUNG_TEXT)}</p></div><div class="w-logos">{logos}</div></div>
 
 <div class="w-kopf"><div class="w-t">Pilotstandorte</div><span>So finden Sie uns</span></div>
 <p style="margin:0 0 0.9rem 0; font-size:0.9rem; color:{T['text']}">{escape(K.PILOT_TEXT)}</p>
@@ -876,12 +908,14 @@ elif ansicht == "Karte":
         pdk.Layer("H3HexagonLayer", karte, get_hexagon="h3", get_fill_color="farbe",
                   get_line_color=[11, 27, 77, 120] if not KARTE_DUNKEL else [255, 255, 255, 40], line_width_min_pixels=0.7,
                   extruded=False, opacity=1, pickable=True, id="hex"),
-        pdk.Layer("H3HexagonLayer", top, get_hexagon="h3", get_fill_color=[0, 0, 0, 0],
-                  get_line_color=[11, 27, 77, 255], stroked=True, filled=False,
+        pdk.Layer("H3HexagonLayer", top, get_hexagon="h3", get_fill_color=[11, 27, 77, 70],
+                  get_line_color=[11, 27, 77, 255], stroked=True, filled=True,
                   line_width_min_pixels=2.5, extruded=False),
-        pdk.Layer("TextLayer", nummern, get_position=["lon", "lat"], get_text="text", get_size=16,
-                  get_color=[11, 27, 77, 255], outline_width=5, outline_color=[255, 255, 255, 255],
-                  font_settings={"sdf": True, "fontSize": 64, "buffer": 12}),
+        # Nummern blenden beim Hineinzoomen in drei Stufen ein, beim Herauszoomen bleibt nur die markierte Zelle
+        *[pdk.Layer("TextLayer", nummern, get_position=["lon", "lat"], get_text="text", get_size=16,
+                    get_color=[18, 48, 128, alpha], outline_width=5, outline_color=[255, 255, 255, alpha],
+                    font_settings={"sdf": True, "fontSize": 64, "buffer": 12}, min_zoom=lo, max_zoom=hi)
+          for lo, hi, alpha in ((11.2, 12.1, 70), (12.1, 12.9, 150), (12.9, 24, 255))],
     ]
     if zeige_wettbewerber:
         wb = lade_wettbewerber(key)
@@ -917,7 +951,12 @@ elif ansicht == "Karte":
                                    line_width_min_pixels=2))
 
     voll_k = st.session_state.get("vb_karte", False)
-    links, rechts = (st.container(), None) if voll_k else zweispaltig()
+    st.markdown("""<style>
+    [data-testid="stFullScreenFrame"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stDeckGlJsonChart"], [data-testid="stDeckGlJsonChart"] > div,
+    [data-testid="stDeckGlJsonChart"] iframe { height: calc(100vh - 14.2rem) !important; max-height: calc(100vh - 14.2rem) !important; min-height: 420px !important; }
+    .panel { height: calc(100vh - 11rem); }
+    </style>""", unsafe_allow_html=True)
+    links, rechts = (st.container(), None) if voll_k else st.columns([3.4, 1], gap="medium")
     with links:
         if rechts is None:  # ohne Kommentarfeld oder im Vollbild sitzt die Legende über der Karte
             st.markdown(legende_html(ebene, stadt_name, nur_lagen, senkrecht=False), unsafe_allow_html=True)
@@ -939,32 +978,33 @@ elif ansicht == "Karte":
                           icon=":material/compare_arrows:", help="Fügt dieses Feld im Tab Vergleich hinzu")
                 z = df[df["h3"] == auswahl].iloc[0]
                 v = viertel(round(float(z["lat"]), 4), round(float(z["lon"]), 4))
-                titel_v = v[0] if v else f"{z['lat']:.4f}, {z['lon']:.4f}"
+                titel_v = v[0] if v else lagebezeichnung(z, pois)
                 bezirk_v = f"{v[1]}, {stadt_name}" if v and v[1] else stadt_name
                 rang_v = f"Rang {int(z['rang'])}" if pd.notna(z["rang"]) else "keine Geschäftslage"
+                nah = in_der_naehe(key, round(float(z["lat"]), 4), round(float(z["lon"]), 4))
+                nah_html = "".join(f'<div class="nah"><span>{escape(nm)}</span><i>{d_} m</i></div>' for nm, d_ in nah) or '<p class="klein">Keine benannten Orte im Umkreis.</p>'
                 stat = lambda w, x: f'<div class="stat"><span>{escape(w)}</span><b>{escape(str(x))}</b></div>'
                 miete_v = f"{z['miete_qm']:.2f} €/m²" if pd.notna(z["miete_qm"]) else "–"
-                panel(f'<div class="kicker">Gewählter Standort</div><h4 style="font-size:1.25rem;margin:0.2rem 0 0">{escape(titel_v)}</h4>'
-                      f'<p class="klein" style="margin:0 0 0.7rem 0">{escape(bezirk_v)} · {rang_v}</p>'
-                      f'<div class="statraster">{stat("Score (PR)", f"{z.pr_score:.0f}" if pd.notna(z.pr_score) else "–")}'
-                      f'{stat("Angebotslücke (PR)", f"{z.pr_luecke:.0f}" if pd.notna(z.pr_luecke) else "–")}'
-                      f'{stat("Einwohner (400 m)", f"{z.einwohner_400m:,.0f}".replace(",", "."))}'
-                      f'{stat("Wettbewerber (400 m)", f"{z.wettbewerber_400m:.0f}")}'
-                      f'{stat("Miete", miete_v)}{stat("Profil", z.profil)}</div>'
-                      f'<div class="abschnitt"><p>{escape(staerken_satz(z))}</p>'
-                      f'<p class="klein">Der blaue Kreis zeigt das Einzugsgebiet von 400 m.</p></div>')
+                panel(f'<div class="kicker">Gewählter Standort</div><h4 style="font-size:1.35rem;margin:0.2rem 0 0;font-family:Georgia,serif;font-weight:400">{escape(titel_v)}</h4>'
+                      f'<p class="klein" style="margin:0.1rem 0 0.6rem 0">{escape(bezirk_v)} · {rang_v} · {escape(str(z.profil))}</p>'
+                      f'<div class="abschnitt" style="margin-top:0.4rem"><h4>In der Nähe</h4>{nah_html}</div>'
+                      f'<div class="statraster" style="margin-top:0.7rem">{stat("Score (PR)", f"{z.pr_score:.0f}" if pd.notna(z.pr_score) else "–")}'
+                      f'{stat("Lücke (PR)", f"{z.pr_luecke:.0f}" if pd.notna(z.pr_luecke) else "–")}'
+                      f'{stat("Einwohner 400 m", f"{z.einwohner_400m:,.0f}".replace(",", "."))}'
+                      f'{stat("Wettbewerber 400 m", f"{z.wettbewerber_400m:.0f}")}'
+                      f'{stat("Miete", miete_v)}{stat("Stabilität", stabilitaet(z.top10_anteil).replace(" Kandidat", ""))}</div>')
             else:
                 reihen = ""
-                for r in top.head(3).itertuples():
-                    konsens = " · Konsens" if r.konsens else ""
-                    reihen += (f'<div class="rang"><span class="pin">{int(r.rang)}</span><div class="rang-t"><b>{escape(r.lage)}</b>'
-                               f'<span>{escape(r.profil)} · {escape(stabilitaet(r.top10_anteil))}{konsens}</span></div>'
-                               f'<span class="rang-s">{r.pr_score:.0f}</span></div>')
+                for r in top.itertuples():
+                    v = viertel(round(float(r.lat), 4), round(float(r.lon), 4))
+                    nah = in_der_naehe(key, round(float(r.lat), 4), round(float(r.lon), 4), n=2)
+                    nah_t = "In der Nähe: " + ", ".join(nm for nm, _ in nah) if nah else escape(r.lage)
+                    reihen += (f'<div class="rang"><span class="pin">{int(r.rang)}</span><div class="rang-t"><b>{escape(v[0] if v else r.lage)}</b>'
+                               f'<span>{escape(nah_t)}</span></div></div>')
                 panel(legende_html(ebene, stadt_name, nur_lagen, senkrecht=True)
-                      + '<div class="abschnitt"><h4>Die drei besten Standorte</h4>' + reihen
-                      + '<p class="klein" style="margin-top:0.4rem">Zahl rechts: Score-Prozentrang. Ein Feld anklicken zeigt Viertel und Kennzahlen.</p></div>')
-    bumper(f"Priorität: {top.iloc[0]['lage']} zuerst prüfen, danach die Standorte mit Konsens-Kennzeichnung.")
-    quelle(QUELLE)
+                      + f'<div class="abschnitt"><h4>Die {TOP_N} besten Standorte</h4>' + reihen
+                      + '<p class="klein" style="margin-top:0.4rem">Ein Feld anklicken zeigt Kennzahlen.</p></div>'
+                      + f'<p class="klein" style="margin-top:1rem">{escape(QUELLE)}</p>')
 
 # ---------------------------------------------------------------------- Analyse
 elif ansicht == "Analyse":

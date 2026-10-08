@@ -98,8 +98,7 @@ PERSONAS = [
 ]
 
 # Lieferung: mögliche Partner, noch keine Gespräche geführt
-LIEFERUNG_TEXT = ("Wer nicht vorbeikommen kann, bekommt den Laden nach Hause: Lieferung über bestehende Plattformen, "
-                  "ohne eigene Fahrer. Das erweitert das Einzugsgebiet über die Laufweite hinaus.")
+LIEFERUNG_TEXT = "Lieferung über bestehende Plattformen, ohne eigene Fahrer."
 LIEFERUNG_PARTNER = [
     ("Deliveroo", "assets/partner/deliveroo.svg"),
     ("Uber Eats", "assets/partner/ubereats.svg"),
@@ -107,7 +106,7 @@ LIEFERUNG_PARTNER = [
     ("Lieferando", "assets/partner/lieferando.png"),
     ("Wolt", "assets/partner/wolt.png"),
 ]
-LIEFERUNG_HINWEIS = "Mögliche Partner. Es gibt noch keine Gespräche."
+LIEFERUNG_HINWEIS = ""
 
 PILOT_TEXT = ("Je Stadt der beste White Spot aus dem Modell.")
 
