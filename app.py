@@ -464,13 +464,17 @@ def theme_chart(chart):
 
 
 @st.cache_data
-def bild_uri(relativ: str):
-    """Bild als eingebetteter Datenstrom für HTML. Fehlt die Datei, gibt es None und die Seite zeigt eine Fläche."""
-    p = Path(__file__).parent / relativ
-    if not p.exists():
-        return None
+def _bild_lesen(pfad_: str, geaendert: float) -> str:
+    """Bild als eingebetteter Datenstrom. Der Änderungszeitpunkt steckt im Cache-Schlüssel, damit neue oder ersetzte Dateien sofort erscheinen."""
+    p = Path(pfad_)
     mime = {".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp"}.get(p.suffix.lower(), "image/jpeg")
     return f"data:{mime};base64," + base64.b64encode(p.read_bytes()).decode()
+
+
+def bild_uri(relativ: str):
+    """Bild unter dem relativen Pfad. Fehlt die Datei, gibt es None und die Seite zeigt eine Fläche."""
+    p = Path(__file__).parent / relativ
+    return _bild_lesen(str(p), p.stat().st_mtime) if p.exists() else None
 
 
 def generiert(schluessel: str):
