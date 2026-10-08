@@ -70,7 +70,7 @@ st.set_page_config(page_title="White Spots", layout="wide", initial_sidebar_stat
 # deshalb steuern wir Farben, Karte und Diagramme hier selbst.
 DUNKEL = False  # Oberfläche ist immer hell. Nur die Karte ist dunkel, damit die White Spots leuchten.
 KARTE_DUNKEL = False
-FELD_DECKKRAFT = 0.6  # Felder sind durchscheinend, die Straßen darunter bleiben sichtbar
+FELD_DECKKRAFT = 0.34  # Felder sind durchscheinend, die Straßen darunter bleiben sichtbar
 T = {
     "bg": "#10131A" if DUNKEL else "#F7F3EE",
     "flaeche": "#181C26" if DUNKEL else "#FFFFFF",
@@ -90,7 +90,7 @@ T = {
     "hover": "#222B3D" if DUNKEL else "#F2F4F8",
     "schatten": "rgba(0, 0, 0, 0.45)" if DUNKEL else "rgba(11, 27, 77, 0.08)",
     "demo": "#FF8A82" if DUNKEL else "#B8322B",
-    "karte": "dark" if KARTE_DUNKEL else "light",
+    "karte": "dark" if KARTE_DUNKEL else "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",  # Voyager: Straßen und Namen deutlich
 }
 # Höhe des Arbeitsbereichs: ein Bildschirm abzüglich Kopfzeile, Titel, Bumper und Quelle
 KOERPER = "max(430px, calc(100vh - 235px))"
@@ -151,6 +151,14 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .st-key-rk_karte, .st-key-rk_pilot {{ height: 0; position: relative; z-index: 30; overflow: visible; }}
 .st-key-rk_karte [data-testid="stHorizontalBlock"], .st-key-rk_pilot [data-testid="stHorizontalBlock"] {{ padding: 0.55rem 0 0 0.55rem; }}
 .st-key-rk_karte button, .st-key-rk_pilot button {{ min-height: 2.1rem; font-size: 0.82rem; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25); }}
+.vgltab {{ overflow: visible; }}
+table.vgl {{ border-collapse: collapse; width: 100%; font-size: 0.88rem; }}
+table.vgl th {{ text-align: left; padding: 0.55rem 0.9rem; border-bottom: 2px solid {T['titel']}; color: {T['titel']}; font-size: 0.95rem; }}
+table.vgl th.z {{ font-weight: 600; font-size: 0.86rem; color: {T['text']}; border-bottom: 1px solid {T['rand']}; width: 34%; }}
+table.vgl th.z small {{ display: block; font-weight: 400; color: {T['grau']}; font-size: 0.72rem; margin-top: 0.1rem; }}
+table.vgl td {{ padding: 0.5rem 0.9rem; border-bottom: 1px solid {T['rand']}; color: {T['titel']}; font-weight: 600; vertical-align: top; }}
+table.vgl td.ph {{ color: {T['grau']}; font-weight: 400; font-style: italic; }}
+table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['hover']}; }}
 .statraster {{ display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 0.9rem; }}
 .stat {{ border-top: 1px solid {T['rand']}; padding-top: 0.35rem; }}
 .stat span {{ display: block; font-size: 0.72rem; color: {T['grau']}; }}
@@ -534,7 +542,7 @@ def flaeche(schluessel: str, klasse: str, extra: str = "") -> str:
 def beige_flaeche():
     """Halbdurchsichtige Fläche in Beige unter den Feldern, tönt die Basiskarte in das Beige der Seite."""
     box = [[[0, 40], [30, 40], [30, 60], [0, 60]]]
-    return pdk.Layer("PolygonLayer", [{"p": box[0]}], get_polygon="p", get_fill_color=[247, 243, 238, 120], stroked=False,
+    return pdk.Layer("PolygonLayer", [{"p": box[0]}], get_polygon="p", get_fill_color=[247, 243, 238, 25], stroked=False,
                      pickable=False)
 
 
@@ -605,7 +613,10 @@ with nav:
     gewaehlte_ansicht = st.segmented_control("Ansicht", ANSICHTEN, default="Konzept", key="ansicht",
                                              label_visibility="collapsed")
 ansicht = gewaehlte_ansicht or "Konzept"  # ein Klick auf die aktive Ansicht würde sie abwählen
-stadt_name = c_stadt.selectbox("Stadt", list(STAEDTE), label_visibility="collapsed", key="stadt")
+if ansicht == "Karte":  # Stadtwahl nur dort, wo sie wirkt
+    stadt_name = c_stadt.selectbox("Stadt", list(STAEDTE), label_visibility="collapsed", key="stadt")
+else:
+    stadt_name = st.session_state.get("stadt", "München")
 key = STAEDTE[stadt_name]
 df, ist_demo = lade_stadt(key)
 if df is None:
@@ -627,7 +638,7 @@ optionen = {f"#{int(r.rang)} {r.lage}": r.h3 for r in top.itertuples()}
 # Optionen der gerade offenen Ansicht in einem Menü
 ebene, nur_lagen, zeige_portfolio, zeige_wettbewerber = "Score", True, False, False
 gewaehlt, wahl = [], None
-if ansicht not in ("Konzept", "Annahmen", "Analyse"):
+if ansicht == "Karte":
     with c_opt.popover("Optionen", icon=":material/tune:", use_container_width=True):
         if ansicht == "Karte":
             ebene = st.selectbox("Ebene", list(EBENEN))
@@ -1011,38 +1022,73 @@ elif ansicht == "Rangliste":
 
 # --------------------------------------------------------------------- Vergleich
 elif ansicht == "Vergleich":
-    if len(gewaehlt) < 2:
-        kopf("Vergleich", f"Standorte in {stadt_name} nebeneinander")
-        st.info("Wähle unter Optionen mindestens zwei Standorte.")
+    def echt(key_):  # nur Städte mit echten Daten, keine Demo
+        return (DATA / f"{key_}_scored.csv").exists()
+
+    zeilen_s = []
+    for n_, k_ in STAEDTE.items():
+        if not echt(k_):
+            continue
+        d_, _ = lade_stadt(k_)
+        po_ = lade_pois(k_)
+        lagen = d_[d_["rang"].notna()]
+        spalten_w = [f"poi_{c}" for c in WETTBEWERB_DIREKT if f"poi_{c}" in d_.columns]
+        wb_n = float(d_[spalten_w].sum().sum())
+        ew = float(d_["einwohner"].sum())
+        t10 = d_[d_["rang"].notna()].nsmallest(10, "rang")
+        pl_ = lade_json(f"{k_}_plausibilitaet.json")
+        profil = lagen["profil"].value_counts(normalize=True) * 100
+        zeilen_s.append({
+            "stadt": n_, "key": k_, "zellen": len(d_), "lagen": len(lagen), "einwohner": ew,
+            "miete": d_.loc[~d_["miete_geschaetzt"].astype(bool), "miete_qm"].median(),
+            "wb": wb_n, "wb_100k": wb_n / ew * 100_000 if ew else float("nan"),
+            "mittag": profil.get("Mittagsstandort", 0.0), "abend": profil.get("Feierabendstandort", 0.0), "ganztag": profil.get("Ganztagsstandort", 0.0),
+            "konsens": int(t10["konsens"].sum()), "sicher": int((t10["top10_anteil"] >= 0.7).sum()),
+            "plaus": pl_["anteil_pois_in_top_zellen"] * 100 if pl_ else float("nan"),
+            "top3": [lagebezeichnung(r, po_) for _, r in t10.head(3).iterrows()],
+        })
+    kopf("Vergleich", "Die Städte im Vergleich: Frankfurt hat weniger Wettbewerb je Einwohner, München mehr Mittagsstandorte"
+         if len(zeilen_s) == 2 else "Die Städte im Vergleich")
+    if not zeilen_s:
+        st.info("Noch keine echten Stadtdaten vorhanden.")
     else:
-        zeilen = top.set_index("h3").loc[[optionen[g] for g in gewaehlt]]
-        balken = pd.DataFrame({g: zeilen.iloc[i][list(TREIBER.values())].to_numpy() for i, g in enumerate(gewaehlt)},
-                              index=list(TREIBER))
-        kopf("Vergleich", f"Die Standorte unterscheiden sich am stärksten beim Treiber {(balken.max(axis=1) - balken.min(axis=1)).idxmax()}")
-        links, rechts = zweispaltig()
+        def f0(x): return f"{x:,.0f}".replace(",", ".")
+        def f1(x): return f"{x:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        kopf_html = "".join(f"<th>{escape(z['stadt'])}</th>" for z in zeilen_s) + ("<th>Berlin</th>" if "berlin" not in [z["key"] for z in zeilen_s] else "")
+        def zeile(titel, fn, hinweis=""):
+            zellen = "".join(f"<td>{fn(z)}</td>" for z in zeilen_s) + ("<td class='ph'>Daten folgen</td>" if "berlin" not in [z["key"] for z in zeilen_s] else "")
+            h = f"<small>{escape(hinweis)}</small>" if hinweis else ""
+            return f"<tr><th class='z'>{escape(titel)}{h}</th>{zellen}</tr>"
+        tab_html = (f"<table class='vgl'><thead><tr><th></th>{kopf_html}</tr></thead><tbody>"
+            + zeile("Einwohner im Raster", lambda z: f0(z["einwohner"]))
+            + zeile("Hexagone in der Stadt", lambda z: f0(z["zellen"]), "Geschäftslagen: " + ", ".join(f0(z["lagen"]) for z in zeilen_s))
+            + zeile("Median-Miete", lambda z: f"{f1(z['miete'])} €/m²", "Bestandsmiete, Zensus 2022")
+            + zeile("Direkte Wettbewerber", lambda z: f0(z["wb"]), "Deli, Feinkost, Bio, Markthalle, Wein, Pasta")
+            + zeile("Wettbewerber je 100.000 Einwohner", lambda z: f1(z["wb_100k"]))
+            + zeile("Konsens-Standorte in den Top 10", lambda z: f"{z['konsens']} von 10", "Score und Angebotslücke beide im obersten Zehntel")
+            + zeile("Sichere Kandidaten in den Top 10", lambda z: f"{z['sicher']} von 10", "mindestens 70 Prozent der Robustheitsläufe")
+            + zeile("Plausibilitätstest", lambda z: f"{f0(z['plaus'])} %", "Wettbewerber in den 20 % Zellen mit höchstem Potenzial, Zufall wären 20 %")
+            + zeile("Die drei besten Standorte", lambda z: "<br>".join(escape(t) for t in z["top3"]))
+            + "</tbody></table>")
+        links, rechts = st.columns([7.4, 3.6], gap="medium")
         with links:
-            exhibit_titel("Treiber im Vergleich", "Prozentrang innerhalb der Stadt")
-            lang = balken.reset_index(names="Treiber").melt("Treiber", var_name="Standort", value_name="Prozentrang")
-            st.altair_chart(theme_chart(
-                alt.Chart(lang).mark_bar().encode(
-                    x=alt.X("Standort:N", axis=None), y=alt.Y("Prozentrang:Q", scale=alt.Scale(domain=[0, 100]), title=None),
-                    color=alt.Color("Standort:N", scale=alt.Scale(range=T["serie"]), legend=alt.Legend(orient="bottom", title=None)),
-                    column=alt.Column("Treiber:N", title=None, header=alt.Header(labelFontSize=13, labelFontWeight="bold")),
-                ).properties(width=200, height=300)), width="content")
-        roh = pd.DataFrame({
-            "Einwohner (400 m)": zeilen["einwohner_400m"].round(0).astype(int).to_numpy(),
-            "Miete (€/m²)": zeilen["miete_qm"].round(2).to_numpy(),
-            "Wettbewerber (400 m)": zeilen["wettbewerber_400m"].round(0).astype(int).to_numpy(),
-            "Profil": zeilen["profil"].to_numpy(),
-        }, index=[f"#{int(r)}" for r in zeilen["rang"]]).T.reset_index(names=" ")
-        if rechts is not None:
-            with rechts:
-                panel('<h4>Rohwerte</h4>' + tabelle(roh) + '<p class="klein" style="margin-top:0.8rem">#1 bis #3 sind die Ränge in der Rangliste.</p>')
-        else:
-            with links:
-                st.markdown(tabelle(roh), unsafe_allow_html=True)
-        bumper("Standort mit höherer Wettbewerbsfreiheit wählen, wenn das Potenzial vergleichbar ist.")
-        quelle(QUELLE)
+            st.markdown(f"<div class='tab vgltab'>{tab_html}</div>", unsafe_allow_html=True)
+        with rechts:
+            exhibit_titel("Profil der Geschäftslagen", "Anteil in Prozent")
+            lang = pd.DataFrame([{"Stadt": z["stadt"], "Profil": p_, "Anteil": z[k_]} for z in zeilen_s
+                                 for p_, k_ in (("Mittagsstandort", "mittag"), ("Feierabendstandort", "abend"), ("Ganztagsstandort", "ganztag"))])
+            st.altair_chart(theme_chart(alt.Chart(lang).mark_bar().encode(
+                y=alt.Y("Stadt:N", title=None, axis=alt.Axis(labelFontSize=13)), x=alt.X("Anteil:Q", stack="normalize", title=None, axis=alt.Axis(format="%")),
+                color=alt.Color("Profil:N", scale=alt.Scale(domain=["Mittagsstandort", "Ganztagsstandort", "Feierabendstandort"],
+                                                           range=["#0B1B4D", "#2C6EF2", "#9DC1FF"]), legend=alt.Legend(orient="bottom", title=None)),
+                tooltip=["Stadt", "Profil", alt.Tooltip("Anteil:Q", format=".0f")]).properties(height=170)), width="stretch")
+            exhibit_titel("Wettbewerber je 100.000 Einwohner", "")
+            wbd = pd.DataFrame([{"Stadt": z["stadt"], "Wert": z["wb_100k"]} for z in zeilen_s])
+            st.altair_chart(theme_chart(alt.Chart(wbd).mark_bar(color="#2C6EF2").encode(
+                y=alt.Y("Stadt:N", title=None, axis=alt.Axis(labelFontSize=13)), x=alt.X("Wert:Q", title=None),
+                tooltip=["Stadt", alt.Tooltip("Wert:Q", format=".1f")]).properties(height=110)), width="stretch")
+        bumper("Beide Städte unterscheiden sich in Kaufkraft und Pendlerstruktur, deshalb bewertet das Modell jede Stadt für sich.")
+        quelle(QUELLE + " Berlin folgt, sobald die Daten vorliegen.")
 
 # ---------------------------------------------------------------------- Erklärung
 elif ansicht == "Erklärung":
