@@ -17,3 +17,10 @@ Die Ergebnisse (`*_scored.csv`, `*_portfolio.csv`, `*.json`) entstehen mit `pyth
 - **OpenStreetMap:** © OpenStreetMap-Mitwirkende, abgefragt über die Overpass API.
   Lizenz: [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
   Die POI-Daten in diesem Ordner stehen als abgeleitete Datenbank ebenfalls unter ODbL 1.0.
+
+## Fertige Ergebnisse (Branch dev-max)
+
+Auf `dev-max` liegen zusätzlich die berechneten Ergebnisse, damit die App sofort startet:
+`<stadt>_scored.csv`, `<stadt>_portfolio.csv`, `<stadt>_plausibilitaet.json`, `<stadt>_pca.json`, `luecke_modell.json`.
+Stand: Lauf von `python analyse.py` (1.000 Robustheitsläufe) nach dem Milieu-Malus und der Tagesfrequenz von 40 %.
+Nach jeder Änderung an `analyse.py` oder den Eingaben neu erzeugen und erneut committen.

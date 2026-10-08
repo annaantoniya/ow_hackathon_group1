@@ -1,0 +1,19 @@
+{
+  "variante": "pca",
+  "korrelation_mit_gesamtdichte": 0.824,
+  "erklaerte_varianz_pc1": 0.814,
+  "ladungen": {
+    "cafe": 0.307,
+    "restaurant": 0.299,
+    "bar": 0.296,
+    "buchhandlung": 0.29,
+    "interior": 0.277,
+    "boutique": 0.3,
+    "blumen": 0.269,
+    "fitness_yoga": 0.294,
+    "kultur": 0.294,
+    "galerie_museum": 0.293,
+    "coworking": 0.256,
+    "fahrradladen": 0.286
+  }
+}

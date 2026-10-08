@@ -3,8 +3,13 @@ __pycache__/
 .DS_Store
 zensus/
 cache/
-# Aus data/ nur die Eingaben für analyse.py versionieren; Ergebnisse lassen sich neu rechnen.
+# Aus data/ die Eingaben für analyse.py und (auf dev-max) die fertigen Ergebnisse versionieren, damit die App ohne Neurechnen startet.
 data/*
 !data/README.md
 !data/*_grid.csv
 !data/*_pois.csv
+!data/*_scored.csv
+!data/*_portfolio.csv
+!data/*_plausibilitaet.json
+!data/*_pca.json
+!data/luecke_modell.json

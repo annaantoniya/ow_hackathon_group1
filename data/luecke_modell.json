@@ -1,0 +1,53 @@
+{
+  "variante": "negativ_binomial",
+  "test_devianz": {
+    "poisson": 5083.59,
+    "negativ_binomial": 4867.06,
+    "nb_raeumlich": 4869.28
+  },
+  "erklaerte_devianz_ausserhalb_je_modell": {
+    "poisson": 0.4743,
+    "negativ_binomial": 0.513,
+    "nb_raeumlich": 0.512
+  },
+  "s_lambda": 100.0,
+  "s_knoten": 400,
+  "s_bandbreite_m": 1500,
+  "test_devianz_je_lambda": {
+    "1.0": 5099.38,
+    "10.0": 4889.47,
+    "100.0": 4869.28
+  },
+  "nb_alpha": 1.0524,
+  "dispersion_poisson": 0.817,
+  "koeffizienten": {
+    "konstante": -4.126,
+    "stadt_frankfurt": -1.2113,
+    "stadt_berlin": -0.7322,
+    "einwohner": 1.5023,
+    "kaufkraft": 0.0859,
+    "alter": -0.6256,
+    "affinitaet": 0.5209,
+    "tag": 0.9731
+  },
+  "standardfehler": {
+    "konstante": 0.1305,
+    "stadt_frankfurt": 0.1373,
+    "stadt_berlin": 0.0899,
+    "einwohner": 0.1906,
+    "kaufkraft": 0.0633,
+    "alter": 0.0606,
+    "affinitaet": 0.0555,
+    "tag": 0.1161
+  },
+  "s_spanne": [
+    0.0,
+    0.0
+  ],
+  "erklaerte_devianz_in_stichprobe": 0.4913,
+  "erklaerte_devianz_ausserhalb": 0.513,
+  "hinweis": "Ohne S_c sind die Standardfehler zu klein, weil Nachbarzellen nicht unabhängig sind. lambda wurde auf derselben Kreuzvalidierung gewählt; der Vergleich ist für M3 leicht optimistisch.",
+  "negative_vorzeichen": [
+    "alter"
+  ]
+}
