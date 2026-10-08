@@ -568,3 +568,204 @@ def daten_ansicht(H):
     st.markdown("<div class='klartext'><b>Zensus 2022:</b> © Statistisches Bundesamt (Destatis), Zensus 2022, Gitterdaten im 100-m-Raster. Lizenz: Datenlizenz Deutschland, Namensnennung, Version 2.0 (dl-de/by-2-0). "
                 "<b>OpenStreetMap:</b> © OpenStreetMap-Mitwirkende, abgefragt über die Overpass API. Lizenz: Open Database License (ODbL) 1.0. Die POI-Daten stehen als abgeleitete Datenbank ebenfalls unter ODbL 1.0.</div>", unsafe_allow_html=True)
     H.quelle("Quelle: data/README.md. Lizenztexte stehen auf den Seiten der Anbieter.")
+
+
+# ------------------------------------------------------------------------------------------------ Vergleich (Ergebnisseite)
+def runde(x, einheit=""):
+    """Rundet für den Fließtext: 28.000, 1.200, 90."""
+    x = float(x)
+    r = round(x, -3) if x >= 10000 else round(x, -2) if x >= 1000 else round(x, -1) if x >= 100 else round(x)
+    return f"{r:,.0f}".replace(",", ".") + einheit
+
+
+def von_zehn(x):
+    return f"{round(x * 10):.0f}"
+
+
+PROFIL_SATZ = {"Mittagsstandort": "Mittagsstandort: Deli mit Mittagstisch und zum Mitnehmen",
+               "Feierabendstandort": "Feierabendstandort: Markt mit Einkauf für zu Hause",
+               "Ganztagsstandort": "Ganztagsstandort: Mittagsgeschäft und Einkauf nach Feierabend"}
+
+
+@st.cache_data
+def steckbriefe(key, stand, n=5):
+    """Die besten n Standorte einer Stadt mit allen Zahlen für den Steckbrief (Umkreis: Feld plus zwei Ringe, etwa 500 m)."""
+    import h3
+    s = scored(key)
+    s_i = s.set_index("h3", drop=False)
+    stadt = s[s["in_stadt"]]
+    lagen = stadt[stadt["rang"].notna()]
+    med_alter = float(stadt.loc[stadt["einwohner"] > 0, "anteil_20_49"].median())
+    med_miete = float(stadt.loc[stadt["miete_qm"].notna() & ~stadt["miete_geschaetzt"].astype(bool), "miete_qm"].median())
+    direkt = [f"poi_{c}" for c in analyse.WETTBEWERB_DIREKT]
+    out = []
+    for _, r in lagen.nsmallest(n, "rang").iterrows():
+        ring = s_i.loc[s_i.index.intersection(h3.grid_disk(r["h3"], 2))]
+        ew = float(ring["einwohner"].sum())
+        alter = float((ring["einwohner"] * ring["anteil_20_49"].fillna(0)).sum() / ew) if ew > 0 else float("nan")
+        out.append({
+            "h3": r["h3"], "lat": float(r["lat"]), "lon": float(r["lon"]), "rang": int(r["rang"]), "konsens": bool(r["konsens"]),
+            "sicher": float(r["top10_anteil"]), "profil": r["profil"], "pr_score": float(r["pr_score"]), "index": float(r["score_index"]),
+            "pr_pot": float(r["pr_potenzial"]), "pr_wf": float(r["pr_wettbewerbsfreiheit"]), "pr_aff": float(r["pr_affinitaet"]),
+            "konkurrenz_anteil": float(1 - r["w"]), "milieu": float(r["m_milieu"]),
+            "einwohner": ew, "alter_rel": alter / med_alter if med_alter and not np.isnan(alter) else float("nan"),
+            "miete_rel": float(r["miete_qm"]) / med_miete if pd.notna(r["miete_qm"]) else float("nan"),
+            "umfeld": int(ring[["poi_cafe", "poi_restaurant"]].fillna(0).sum().sum()),
+            "buero": int(ring["poi_buero"].fillna(0).sum()), "halt": int(ring[["poi_tram_ubahn", "poi_bahnhof"]].fillna(0).sum().sum()),
+            "vorhanden": float(ring[direkt].fillna(0).sum().sum()), "erwartet": float(ring["y_erwartet"].fillna(0).sum()),
+        })
+    return out
+
+
+def punkte(sb):
+    """Was den Ort auszeichnet oder bremst: (Symbol, Text). Stärken ab 80, Bremsen unter 40, wie bei staerken_satz()."""
+    p = []
+    if sb["pr_pot"] >= 80:
+        p.append(("+", f"<b>Menschen:</b> rund {runde(sb['einwohner'])} Einwohner im Umkreis von etwa 500 m" + (", überdurchschnittlich viele zwischen 20 und 49" if sb["alter_rel"] > 1.05 else "")))
+    if not np.isnan(sb["miete_rel"]) and (sb["miete_rel"] >= 1.2 or sb["miete_rel"] <= 0.85):
+        p.append(("+" if sb["miete_rel"] >= 1.2 else "–", f"<b>Kaufkraft:</b> Mieten {abs(sb['miete_rel'] - 1) * 100:.0f} % {'über' if sb['miete_rel'] >= 1 else 'unter'} dem Stadtschnitt"))
+    if sb["pr_aff"] >= 80 or sb["umfeld"] >= 60:
+        p.append(("+", f"<b>Umfeld:</b> rund {runde(sb['umfeld'])} Cafés und Restaurants in der Nähe"))
+    if sb["buero"] >= 30:
+        p.append(("+", f"<b>Tagesbetrieb:</b> rund {runde(sb['buero'])} Büros und {sb['halt']} Haltestellen in der Nähe"))
+    if sb["erwartet"] > 0:
+        if sb["vorhanden"] <= 0.7 * sb["erwartet"]:
+            p.append(("+", f"<b>Konkurrenz:</b> {sb['vorhanden']:.0f} Feinkostläden in der Nähe, zu erwarten wären etwa {sb['erwartet']:.0f}"))
+        elif sb["vorhanden"] >= 0.9 * sb["erwartet"]:
+            p.append(("–", f"<b>Konkurrenz:</b> {sb['vorhanden']:.0f} Feinkostläden stehen schon da, etwa so viele wie zu erwarten"))
+    if sb["pr_wf"] < 40:
+        p.append(("–", f"<b>Konkurrenz:</b> bestehende Läden binden rund {sb['konkurrenz_anteil'] * 100:.0f} % der Kundschaft"))
+    if sb["milieu"] < 0.9:
+        p.append(("–", "<b>Umfeld:</b> Abzug wegen Spielhallen oder Wettbüros in der Nähe"))
+    return p[:4]
+
+
+def steckbrief_html(sb, name, nah):
+    urteil = ("Doppelt bestätigt" if sb["konsens"] else "Nicht doppelt bestätigt")
+    kern = ("Viel passende Kundschaft" if sb["pr_pot"] >= 80 else "Solide Kundschaft") + (", wenig Konkurrenz" if sb["pr_wf"] >= 60 else ", aber schon Konkurrenz vor Ort")
+    pk = "".join(f"<li class='{'plus' if s == '+' else 'minus'}'>{t}</li>" for s, t in punkte(sb))
+    sicher = f"bleibt in {sb['sicher'] * 100:.0f} von 100 Testrechnungen unter den besten zehn"
+    badge = f"<span class='badge ja'>doppelt bestätigt</span>" if sb["konsens"] else "<span class='badge'>nicht doppelt bestätigt</span>"
+    return (f"<div class='sb'><div class='sbkopf'><span class='pin'>{sb['rang']}</span><div><b>{escape(name)}</b><small>{escape(nah)}</small></div></div>"
+            f"{badge}<p class='kern'>{kern}. Stärker als {sb['pr_score']:.0f} von 100 Einkaufslagen der Stadt, {sb['index']:.1f}-mal so stark wie eine typische.</p>"
+            f"<ul>{pk}</ul><p class='fuss2'><b>Wie sicher?</b> {sicher}.<br><b>Welches Format?</b> {escape(PROFIL_SATZ.get(sb['profil'], ''))}.</p></div>")
+
+
+def stadt_satz(sbs, key):
+    """Aussage-Überschrift je Stadt, aus den Daten abgeleitet."""
+    k = sum(x["konsens"] for x in sbs)
+    sicher = np.median([x["sicher"] for x in sbs])
+    lat, lon = np.array([x["lat"] for x in sbs]), np.array([x["lon"] for x in sbs])
+    spanne = np.hypot((lat.max() - lat.min()) * 111, (lon.max() - lon.min()) * 111 * np.cos(np.radians(lat.mean())))
+    mittag = sum(x["profil"] == "Mittagsstandort" for x in sbs) >= 3
+    if k == 0:
+        return "Viel Kundschaft, aber kaum fehlende Läden: Hier zählt die Lage mit dem größten Kundenpotenzial."
+    if k >= 4 and sicher >= 0.7:
+        return "Die Spitze ist klar und stabil: Alle besten Standorte sind doppelt bestätigt und bleiben auch bei veränderten Annahmen vorn."
+    if k >= 4 and spanne < 3:
+        return "Die stärksten Standorte bilden ein " + ("Mittags-" if mittag else "") + "Cluster auf engem Raum, etwas weniger sicher, weil sich viele ähnlich starke Orte die Plätze teilen."
+    return "Das Bild ist gemischt: Ein Teil der besten Standorte ist doppelt bestätigt."
+
+
+def vergleich_ansicht(H):
+    import pydeck as pdk
+    daten = kz()
+    if not daten:
+        st.info("Noch keine Ergebnisse. Bitte `python analyse.py` ausführen.")
+        return
+    stand = sum(_stand(f"{v['key']}_scored.csv") for v in daten.values())
+    sb_alle = {n: steckbriefe(v["key"], stand) for n, v in daten.items()}
+    n_k = sum(v["konsens"] for v in daten.values())
+    pl = [v["plaus"] for v in daten.values() if v["plaus"] is not None]
+    gesamt_z = sum(v["zellen"] for v in daten.values())
+    gesamt_o = sum(len(pois(v["key"])) for v in daten.values())
+    klar = [n for n in daten if sum(x["konsens"] for x in sb_alle[n]) >= 4]
+    offen = [n for n in daten if sum(x["konsens"] for x in sb_alle[n]) == 0]
+    fazit = (f"{' und '.join(klar)} haben klare, doppelt bestätigte Favoriten." if klar else "Die Favoriten sind nicht überall doppelt bestätigt.") + (f" In {' und '.join(offen)} ist das Bild weniger eindeutig." if offen else "")
+
+    H.kopf("Vergleich", "Wir haben in drei Städten die stärksten Standorte für OLIVE gefunden und doppelt geprüft")
+
+    # 1 Auf einen Blick
+    zahlen([(f0(n_k), "Einkaufslagen sind doppelt bestätigt: Beide Rechenwege sehen sie ganz vorn."),
+            (f"{von_zehn(min(pl))} bis {von_zehn(max(pl))} von 10", "heutigen Feinkostläden liegen dort, wo wir das meiste Kundenpotenzial sehen. Bei Zufall wären es 2 von 10."),
+            (f"{runde(gesamt_z)} Felder", f"und {runde(gesamt_o)} Orte (Läden, Cafés, Büros, Haltestellen) ausgewertet.")], spalten=3)
+    aktionstitel(fazit)
+
+    # 2 Datengrundlage
+    abschnitt(H, "v2", "Wir haben nur offene, amtliche und für alle Städte gleiche Daten genutzt, damit alles vergleichbar und nachprüfbar ist")
+    c1, c2 = st.columns(2, gap="medium")
+    with c1:
+        kasten("Wer dort lebt", "Amtliche Volkszählung 2022",
+               "<ul><li>Wie viele Menschen wohnen in einem Feld, wie viele sind 20 bis 49 Jahre alt, wie viele leben in kleinen Haushalten?</li><li>Die Miete pro Quadratmeter steht für die Kaufkraft.</li></ul>")
+    with c2:
+        kasten("Was es dort gibt", "Frei zugängliche Online-Karte",
+               "<ul><li><b>Konkurrenz:</b> Feinkost, Delis, Bio-Märkte, Weinhandlungen, Supermärkte, Bäcker.</li><li><b>Passendes Umfeld:</b> Cafés, Restaurants, Buchläden, Kultur.</li>"
+               "<li><b>Tagesbetrieb:</b> Büros, Hochschulen, Bahnhöfe, Haltestellen. <b>Ungünstiges Umfeld:</b> Spielhallen, Wettbüros.</li></ul>")
+    st.markdown("<div class='kasten' style='margin-top:0.6rem'><h4>Warum gerade diese Daten?</h4><ul>"
+                "<li><b>Kleinräumig:</b> Felder von etwa 300 × 300 Metern zeigen Straßenzüge, nicht nur Stadtteile.</li>"
+                "<li><b>Gleich für alle drei Städte und frei nachrechenbar.</b></li>"
+                "<li><b>Ehrliche Ersatzgrößen:</b> Miete statt Einkommen, Büros und Haltestellen statt Passantenzahlen. Herkunft nutzen wir bewusst nicht.</li></ul>"
+                "<div class='schwach'>Grenzen: Stand der Volkszählung ist 2022, die Online-Karte ist nicht überall gleich vollständig, Ladengröße und Umsatz kennen wir nicht.</div></div>", unsafe_allow_html=True)
+
+    # 3 Vorgehen
+    abschnitt(H, "v3", "So sind wir vorgegangen: berechnen, Lücken suchen, doppelt prüfen")
+    pipeline([("1 Kundenpotenzial", "Wie viele Kunden gewinnt ein Laden?", "Wie viele passende Kunden wohnen oder arbeiten in Laufweite, und wie viele nähme ein neuer Laden der Konkurrenz ab?", None),
+              ("2 Fehlende Läden", "Wo fehlt etwas?", "Wir haben aus den heutigen Feinkostläden gelernt, welche Viertel sie anziehen. Wo weniger stehen als erwartet, gibt es eine Lücke.", None),
+              ("3 Doppelt prüfen", "Beide Wege müssen zustimmen", "Besonders stark ist ein Ort, wenn beide Wege ihn ganz vorn sehen. Alle Annahmen haben wir 1.000-mal leicht verändert.", None)])
+
+    # 4 Ergebnisse
+    abschnitt(H, "v4", "Die stärksten Standorte liegen dort, wo Kundschaft, Umfeld und wenig Konkurrenz zusammenkommen, nicht dort, wo am meisten Menschen wohnen")
+    cols = st.columns(len(daten), gap="medium")
+    for col, (n, v) in zip(cols, daten.items()):
+        with col:
+            sbs = sb_alle[n]
+            mod = pd.Series([x["profil"] for x in sbs]).mode().iloc[0]
+            kasten(n, stadt_satz(sbs, v["key"]).split(":")[0].rstrip("."),
+                   f"<ul><li><b>{v['konsens']}</b> doppelt bestätigte Einkaufslagen, {sum(x['konsens'] for x in sbs)} von 5 in den Top 5.</li>"
+                   f"<li>Typischer Charakter: {escape(mod)}.</li></ul>")
+
+    # 5 White Spots je Stadt
+    abschnitt(H, "v5", "Die White Spots je Stadt: fünf Standorte mit klarem Profil")
+    tabs = st.tabs(list(daten))
+    for tab, (n, v) in zip(tabs, daten.items()):
+        with tab:
+            sbs = sb_alle[n]
+            aktionstitel(f"{n}: {stadt_satz(sbs, v['key'])}")
+            po = pois(v["key"])
+            namen, nahs = [], []
+            for x in sbs:
+                vt = H.viertel(round(x["lat"], 4), round(x["lon"], 4))
+                namen.append(vt[0] if vt else H.lagebezeichnung({"lat": x["lat"], "lon": x["lon"]}, H.lade_pois(v["key"])))
+                nah = H.in_der_naehe(v["key"], round(x["lat"], 4), round(x["lon"], 4), 1)
+                nahs.append(("nahe " + nah[0][0]) if nah else n)
+            pts = pd.DataFrame({"lat": [x["lat"] for x in sbs], "lon": [x["lon"] for x in sbs], "t": [str(x["rang"]) for x in sbs]})
+            st.pydeck_chart(pdk.Deck(layers=[
+                pdk.Layer("ScatterplotLayer", pts, get_position=["lon", "lat"], get_radius=250, radius_min_pixels=11, radius_max_pixels=11, get_fill_color=[11, 27, 77, 255], stroked=True, get_line_color=[255, 255, 255, 255], line_width_min_pixels=2),
+                pdk.Layer("TextLayer", pts, get_position=["lon", "lat"], get_text="t", get_size=13, get_color=[255, 255, 255, 255])],
+                initial_view_state=pdk.ViewState(latitude=float(pts["lat"].mean()), longitude=float(pts["lon"].mean()), zoom=11.3, min_zoom=8, max_zoom=17), map_style=H.karte_style),
+                width="stretch", height=240)
+            st.markdown("<div class='sbraster'>" + "".join(steckbrief_html(x, namen[i], nahs[i]) for i, x in enumerate(sbs)) + "</div>", unsafe_allow_html=True)
+
+    # 6 Selbst vergleichen
+    with st.expander("Selbst vergleichen: zwei bis fünf Standorte nebeneinander"):
+        opts = {f"{n} · Platz {x['rang']}": (n, i) for n, sbs in sb_alle.items() for i, x in enumerate(sbs)}
+        wahl = st.multiselect("Standorte wählen", list(opts), default=[f"{n} · Platz 1" for n in daten], max_selections=5, key="vgl_neu")
+        if len(wahl) >= 2:
+            sel = [sb_alle[opts[w][0]][opts[w][1]] for w in wahl]
+            kopf_ = "".join(f"<th>{escape(w)}</th>" for w in wahl)
+            def zl(t, fn): return f"<tr><th class='z'>{escape(t)}</th>" + "".join(f"<td>{fn(x)}</td>" for x in sel) + "</tr>"
+            tab = (f"<table class='vgl'><thead><tr><th></th>{kopf_}</tr></thead><tbody>"
+                   + zl("Stärker als … von 100 Einkaufslagen", lambda x: f"<b>{x['pr_score']:.0f}</b>")
+                   + zl("Doppelt bestätigt", lambda x: "<span class='badge ja'>ja</span>" if x["konsens"] else "<span class='badge'>nein</span>")
+                   + zl("Wie sicher (von 100 Testrechnungen)", lambda x: f"<b>{x['sicher'] * 100:.0f}</b>")
+                   + zl("Anteil Kundschaft bei der Konkurrenz", lambda x: f"{x['konkurrenz_anteil'] * 100:.0f} %")
+                   + zl("Einwohner im Umkreis", lambda x: runde(x["einwohner"]))
+                   + zl("Cafés und Restaurants", lambda x: runde(x["umfeld"]))
+                   + zl("Büros", lambda x: runde(x["buero"]))
+                   + zl("Feinkostläden: vorhanden / erwartet", lambda x: f"{x['vorhanden']:.0f} / {x['erwartet']:.0f}")
+                   + zl("Format", lambda x: escape(x["profil"].replace("standort", "")))
+                   + "</tbody></table>")
+            st.markdown(f"<div class='tab vgltab'>{tab}</div><p class='klein'>Alle Werte gelten nur im Vergleich zur eigenen Stadt. Rohwerte sind zwischen Städten nicht vergleichbar.</p>", unsafe_allow_html=True)
+
+    H.bumper("Unsere Rechnung zeigt, wo sich ein Besuch vor Ort lohnt. Sie ersetzt ihn nicht.")
+    H.quelle(H.QUELLE)

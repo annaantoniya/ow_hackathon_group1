@@ -155,6 +155,17 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .st-key-rk_karte, .st-key-rk_pilot {{ height: 0; position: relative; z-index: 30; overflow: visible; }}
 .st-key-rk_karte [data-testid="stHorizontalBlock"], .st-key-rk_pilot [data-testid="stHorizontalBlock"] {{ padding: 0.55rem 0 0 0.55rem; }}
 .st-key-rk_karte button, .st-key-rk_pilot button {{ min-height: 2.1rem; font-size: 0.82rem; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25); }}
+.sbraster {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.7rem; margin-top: 0.6rem; }}
+.sb {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; border-top: 3px solid {T['akzent']}; padding: 0.7rem 0.8rem; font-size: 0.8rem; }}
+.sbkopf {{ display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem; }}
+.sbkopf b {{ display: block; color: {T['titel']}; font-size: 0.95rem; line-height: 1.2; }}
+.sbkopf small {{ color: {T['grau']}; font-size: 0.72rem; }}
+.sb .kern {{ margin: 0.5rem 0 0.3rem 0; font-weight: 600; color: {T['titel']}; line-height: 1.35; }}
+.sb ul {{ list-style: none; padding: 0; margin: 0 0 0.4rem 0; }}
+.sb li {{ padding-left: 1rem; position: relative; margin-bottom: 0.3rem; line-height: 1.35; }}
+.sb li:before {{ position: absolute; left: 0; font-weight: 800; }}
+.sb li.plus:before {{ content: "+"; color: #1E8E50; }} .sb li.minus:before {{ content: "–"; color: #C0392B; }}
+.sb .fuss2 {{ border-top: 1px solid {T['rand']}; padding-top: 0.4rem; margin: 0; line-height: 1.4; color: {T['text']}; }}
 .vkopf {{ font-family: Georgia, serif; font-size: 1.25rem; color: {T['titel']}; margin: 1.5rem 0 0.5rem 0; border-bottom: 1px solid {T['rand']}; padding-bottom: 0.25rem; }}
 .vkopf .klein {{ font-family: Arial, sans-serif; font-size: 0.78rem; color: {T['grau']}; margin-left: 0.6rem; }}
 .hinweisbox {{ background: #CEECFF; color: {MIDNIGHT}; padding: 0.6rem 1rem; font-size: 0.86rem; margin: 0.2rem 0 0.4rem 0; }}
@@ -685,7 +696,8 @@ def pilotstandorte():
 from types import SimpleNamespace  # noqa: E402
 
 H_METHODIK = SimpleNamespace(kopf=kopf, exhibit_titel=exhibit_titel, bumper=bumper, quelle=quelle, theme_chart=theme_chart,
-                             tabelle=tabelle, QUELLE="Quellen: OpenStreetMap-Mitwirkende, Statistisches Bundesamt (Zensus 2022).")
+                             tabelle=tabelle, viertel=viertel, lagebezeichnung=lagebezeichnung, lade_pois=lade_pois, in_der_naehe=in_der_naehe,
+                             karte_style=T["karte"], QUELLE="Quellen: OpenStreetMap-Mitwirkende, Statistisches Bundesamt (Zensus 2022).")
 
 # Kopfzeile: Ansichten zum Durchklicken, Stadt, und Optionen der Ansicht. Keine Seitenleiste.
 with st.container(key="topbar"):
@@ -1025,6 +1037,37 @@ elif ansicht == "Karte":
                       + f'<div class="abschnitt"><h4>Die {TOP_N} besten Standorte</h4>' + reihen
                       + '<p class="klein" style="margin-top:0.4rem">Ein Feld anklicken zeigt Kennzahlen.</p></div>'
                       + f'<p class="klein" style="margin-top:1rem">{escape(QUELLE)}</p>')
+
+# ------------------------------------------------------------------ Datengrundlage
+elif ansicht == "Datengrundlage":
+    methodik.daten_ansicht(H_METHODIK)
+
+# ---------------------------------------------------------------------- Analyse
+elif ansicht == "Analyse":
+    methodik.analyse_ansicht(H_METHODIK, stadt_name, key)
+
+# ------------------------------------------------------------------- Rangliste
+elif ansicht == "Rangliste":
+    n_sicher = int((top["top10_anteil"] >= 0.7).sum())
+    kopf("Rangliste", f"{stadt_name}: {n_sicher} der zehn besten Standorte sind sichere Kandidaten")
+    exhibit_titel("Die zehn besten Standorte", "PR = Prozentrang innerhalb der Stadt, 0 bis 100")
+    tab = pd.DataFrame({
+        "Rang": top["rang"].astype(int),
+        "Lage": top["lage"],
+        "Score (PR)": top["pr_score"].round(0).astype(int),
+        "Lücke (PR)": top["pr_luecke"].round(0).astype(int),
+        "Konsens": top["konsens"].map({True: "✓", False: ""}),
+        **{k: top[c].round(0).astype(int) for k, c in TREIBER.items()},
+        "Profil": top["profil"],
+        "Stabilität": top["top10_anteil"].map(stabilitaet),
+    })
+    st.markdown(tabelle(tab), unsafe_allow_html=True)
+    bumper("Konsens heißt: in Score und Angebotslücke im obersten Zehntel. Diese Standorte zuerst vor Ort prüfen.")
+    quelle(QUELLE)
+
+# --------------------------------------------------------------------- Vergleich
+elif ansicht == "Vergleich":
+    methodik.vergleich_ansicht(H_METHODIK)
 
 # ------------------------------------------------------------------ Datengrundlage
 elif ansicht == "Datengrundlage":
