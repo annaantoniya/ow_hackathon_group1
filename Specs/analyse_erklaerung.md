@@ -204,15 +204,17 @@ w_{Tram/U-Bahn} Tram/U-Bahn_i +
 w_{Bus} Bus_i
 $$
 
-Die Gewichte sind absteigend geordnet: Bahnhof > Büro > Hochschule > Tram/U-Bahn > Bus.
+Die Gewichte sind absteigend geordnet: Büro > Hochschule > Bahnhof = Tram/U-Bahn > Bus.
 
 | Frequenzquelle | Gewicht |
 | -------------- | ------: |
-| Bahnhof        |     5,0 |
 | Büro           |     4,0 |
 | Hochschule     |     3,0 |
+| Bahnhof        |     2,0 |
 | Tram/U-Bahn    |     2,0 |
 | Bus            |     1,0 |
+
+Im Robustheitstest werden die Gewichte variiert, die Rangfolge bleibt dabei in jedem Lauf erhalten.
 
 Der resultierende Wert `t_index` ist deshalb **kein Wert wie „2.500 Personen“**.
 
