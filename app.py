@@ -25,7 +25,7 @@ STAEDTE = {"München": "muenchen", "Frankfurt": "frankfurt", "Berlin": "berlin"}
 ERDRADIUS_M = 6_371_000
 ZOOM_STADT = 11.3
 WETTBEWERB_DIREKT = ["deli", "feinkost_kaese", "wein", "bio_markt", "reformhaus", "markthalle", "pasta"]
-ANSICHTEN = ["Konzept", "Karte", "Analyse", "Rangliste", "Vergleich", "Erklärung", "Annahmen"]
+ANSICHTEN = ["Konzept", "Karte", "Vergleich", "Analyse"]  # Rangliste, Erklärung und Annahmen sind unten noch im Code, aber nicht mehr in der Navigation
 
 # Farben: Midnight für Struktur, Bright Blue für Bedienung, Sky und Blau für Daten, Coral nur für die Top 10
 MIDNIGHT, BLUE, BRIGHT, SKY, CORAL, GREY = "#0B1B4D", "#002C77", "#2C6EF2", "#009DE0", "#EF4E45", "#6B7079"
