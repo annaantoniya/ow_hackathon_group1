@@ -109,7 +109,7 @@ st.markdown(f"""
 html, body, [class*="css"] {{ font-family: Arial, Helvetica, sans-serif; }}
 .stApp {{ background: {T['bg']}; color: {T['text']}; }}
 .stApp p, .stApp li, .stApp label, .stApp td, .stApp th {{ color: inherit; }}
-.block-container {{ padding: 0.8rem 2rem 0.4rem 2rem; max-width: none; }}
+.block-container {{ padding: 0.8rem 2rem 0.4rem 2rem; max-width: 1320px; margin-left: auto; margin-right: auto; }}
 [data-testid="stVerticalBlock"] {{ gap: 0.55rem; }}
 header[data-testid="stHeader"] {{ background: transparent; height: 0; min-height: 0; }}
 #MainMenu, footer {{ visibility: hidden; }}
@@ -200,14 +200,14 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .w-intro-zeile p {{ margin: 0; padding: 1.1rem 2rem 1.2rem 0; font-size: 0.95rem; line-height: 1.6; color: {T['text']}; max-width: 54rem; }}
 .w-intro-zeile .l {{ border-left: 1px solid {T['titel']}; display: flex; align-items: center; justify-content: center; }}
 .w-intro-zeile img {{ width: 4.4rem; height: 4.4rem; border-radius: 50%; }}
-.w-split {{ display: grid; grid-template-columns: 1.3fr 1fr; min-height: 440px; margin-top: 0.8rem; }}
+.w-split {{ display: grid; grid-template-columns: 1.3fr 1fr; min-height: 420px; margin-top: 0.8rem; }}
 .zm {{ overflow: hidden; position: relative; }}
 .zm::before {{ content: ""; position: absolute; inset: 0; background-image: inherit; background-size: cover; background-position: inherit; transform: scale(var(--z, 1.25)); transform-origin: var(--o, center); }}
-.w-split .bild.zm {{ --z: 1.12; --o: 40% 15%; }}
-.w-promo .b.zm {{ --z: 1.3; --o: 55% 25%; }}
-.w-card.slim .b.zm {{ --z: 1.3; }}
-.w-card .b.zm {{ --z: 1.18; }}
-.review .foto.zm {{ --z: 1.15; --o: 50% 0%; }}
+.w-split .bild.zm {{ --z: 1; --o: 40% 15%; }}
+.w-promo .b.zm {{ --z: 1.05; --o: 55% 25%; }}
+.w-card.slim .b.zm {{ --z: 1.05; }}
+.w-card .b.zm {{ --z: 1.02; }}
+.review .foto.zm {{ --z: 1.05; --o: 50% 0%; }}
 .w-split .bild {{ background-size: cover; background-position: center top; position: relative; }}
 .w-split .text {{ background: {MIDNIGHT}; color: #FFFFFF; padding: 2.2rem 2.6rem; display: flex; flex-direction: column; justify-content: center; }}
 .w-kicker {{ font-size: 0.74rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8E9AC2; }}
