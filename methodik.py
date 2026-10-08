@@ -199,8 +199,8 @@ def analyse_ansicht(H, stadt, key):
             color=alt.Color("Gruppe:N", scale=alt.Scale(range=["#2C6EF2", "#0B1B4D"]), legend=alt.Legend(orient="bottom", title=None))).properties(height=210)), width="stretch")
 
     schritt("1", f"Nähe zählt: Nach {hA} m ist nur noch die Hälfte der Nachfrage erreichbar, bei der Tagesbevölkerung schon nach {hT} m.",
-            r"f_h(d)=2^{-d/h},\quad f_h(d)=0 \text{ für } d>d_{max}",
-            f"Jede Zelle gibt ihre Nachfrage mit diesem Gewicht an Standorte in der Umgebung ab. Die Wegstrecke ist Luftlinie mal {f1(umweg)}, über {f0(dmax)} m hinaus zählt nichts. Wer nur Mittagspausen nutzt, läuft kürzer als ein Anwohner.",
+            r"f_h:\mathbb{R}_{\ge 0}\to[0,1],\qquad f_h(d)=2^{-d/h}\cdot\mathbf{1}_{\{d\le 1500\}}",
+            f"Benachbarte Zellen werden exponentiell weniger in Betracht gezogen. Jede Zelle gibt ihre Nachfrage mit diesem Gewicht an Standorte in der Umgebung ab. Die Wegstrecke ist Luftlinie mal {f1(umweg)}, über {f0(dmax)} m hinaus zählt nichts (Indikatorfunktion).",
             "h ist die Halbwertsdistanz: Bei d = h halbiert sich das Gewicht. Anwohner laufen rund fünf Minuten, die Tagesbevölkerung weniger, weil Mittagspausen kurz sind. Die Wegstrecke wird mit einem Umwegfaktor aus der Luftlinie geschätzt, weil kein Wegenetz verwendet wird.",
             beleg1)
 
@@ -222,8 +222,8 @@ def analyse_ansicht(H, stadt, key):
         st.markdown(f"<p class='klein'>Anteil der Tagesbevölkerung an der Nachfrage: θ = {f1(P['theta'] * 100)} %. Der Index misst keine Personen, nur ein relatives Mehr oder Weniger.</p>", unsafe_allow_html=True)
 
     schritt("3", f"Die Tagesbevölkerung trägt {int(P['theta'] * 100)} % der Nachfrage und kommt aus Büros, Hochschulen und Haltestellen.",
-            r"t_i=\sum_{c\in \text{Frequenz}} w_c\cdot POI_{c,i}",
-            "Weil es keine offenen Personenzahlen gibt, zählt ein gewichteter Index: Ein Büro bringt mehr Mittagskundschaft als eine Bushaltestelle.",
+            r"t_i=\sum_{c\in \text{Frequenz}} w_c\,POI_{c,i},\qquad O^A_i=q_i(1-\theta)\frac{N_i}{\sum_j N_j},\quad O^T_i=q_i\,\theta\,\frac{t_i}{\sum_j t_j}",
+            f"Die Quellnachfrage wird in Anwohner (A) und Tagesfrequenz (T) aufgeteilt, gewichtet mit θ = {f1(P['theta'])}. Weil es keine offenen Personenzahlen gibt, zählt für T ein gewichteter Index: Ein Büro bringt mehr Mittagskundschaft als eine Bushaltestelle.",
             "Die Gewichte sind Setzungen mit der Rangfolge Büro, Hochschule, Bahnhof gleich Tram und U-Bahn, dann Bus. Der Robustheitstest variiert sie, hält aber die Rangfolge ein.",
             beleg3)
 
@@ -238,8 +238,8 @@ def analyse_ansicht(H, stadt, key):
 
     pv = [v["pca_var"] for v in daten.values() if v["pca_var"] is not None]
     schritt("4", f"Eine einzige Achse erklärt {min(pv) * 100:.0f} bis {max(pv) * 100:.0f} % der Unterschiede im Umfeld, deshalb reicht ein Affinitätsfaktor.",
-            r"A_i=v_1^{\top}z_i,\quad q_i=q_{min}+(q_{max}-q_{min})\cdot PR(A_i)",
-            f"Cafés, Bars, Buchläden, Kultur und ähnliche Orte zeigen, wo sich die Zielgruppe bewegt. Eine Hauptkomponente fasst {len(analyse.AFFINITAET)} Kategorien zusammen, der Faktor q liegt zwischen {f1(P['q_min'])} und {f1(P['q_max'])}.",
+            r"s_{c,i}=\sum_j POI_{c,j}\,f(d_{ij})\ \ (c\in\text{AFFINITÄT}),\qquad A_i=\langle v_1,z_i\rangle,\quad q_i=q_{min}+(q_{max}-q_{min})\,PR(A_i)",
+            f"Die Standortaffinität zieht latente Faktoren aus geglätteten Kategoriendichten. Der Affinitätsindex A ist die orthogonale Projektion der standardisierten Dichten z auf die erste Hauptkomponente v₁. Sie fasst {len(analyse.AFFINITAET)} Kategorien zusammen, der Faktor q liegt zwischen {f1(P['q_min'])} und {f1(P['q_max'])}.",
             "Je Kategorie wird die geglättete Dichte gebildet, logarithmiert und je Stadt standardisiert. Die erste Hauptkomponente v1 ist die Richtung mit der größten gemeinsamen Streuung. Der Prozentrang übersetzt den Index in den Faktor q.",
             beleg4)
 
@@ -255,8 +255,8 @@ def analyse_ansicht(H, stadt, key):
 
     mi = [v["milieu_anteil"] for v in daten.values()]
     schritt("5", f"Spielhallen und Rotlicht dämpfen die Anziehung eines Standorts, das betrifft {min(mi) * 100:.0f} bis {max(mi) * 100:.0f} % der Stadtzellen.",
-            r"m_c=\max\!\left(m_{min},\,2^{-s_c/s_{1/2}}\right),\quad s_c=\sum_j M_j f_{h_M}(d_{cj})",
-            f"M_j zählt {', '.join(analyse.MILIEU[:3])} und weitere Orte im Umfeld. Bei s = {f1(P['milieu_halbwert'])} halbiert sich die Anziehung, der Malus fällt nie unter {f1(P['m_min'])}.",
+            r"m_k=\max\!\left(0{,}2,\ 2^{-\frac{1}{2}\sum_j M_j\,f_{250}(d_{kj})}\right)",
+            f"Der standortspezifische Milieu-Malus m_k dämpft die Anziehung eines Standorts k. M_j zählt {', '.join(analyse.MILIEU[:3])} und weitere Orte im 250-m-Umfeld. Je zwei gewichtete Orte halbiert sich die Anziehung, der Malus fällt nie unter {f1(P['m_min'])}.",
             "Es gibt keine offenen kleinräumigen Kriminalitätsdaten. Das Milieu wird deshalb über konkrete Orte erfasst, nicht über Bevölkerungsgruppen. Das ist methodisch sauberer und vermeidet Diskriminierung.",
             beleg5)
 
@@ -270,7 +270,7 @@ def analyse_ansicht(H, stadt, key):
 
     schritt("6", f"Bestehende Läden schöpfen an den Top-10-Standorten in {stadt} einen großen Teil des Potenzials ab: Es bleiben {d['w_top10'] * 100:.0f} %.",
             r"U_c=\sum_i O_i\,\frac{a_{neu}\,m_c\,f(d_{ic})}{a_{neu}\,m_c\,f(d_{ic})+K_i+a_0},\qquad W_c=\frac{U_c}{P_c}",
-            "Das Huff-Modell verteilt die Nachfrage jeder Quellzelle auf alle Läden in Reichweite. U ist der Anteil, den der neue Laden gewinnt. P ist derselbe Wert ohne Wettbewerb, W der Anteil, den die Konkurrenz übrig lässt.",
+            "Das Huff-Modell verteilt die Nachfrage jeder Quellzelle auf alle Läden in Reichweite. U ist der relative Marktanteil des neuen Ladens (Huff-Score), P das Monopolpotenzial, also derselbe Wert ohne Wettbewerb. Die Wettbewerbsfreiheit W = U/P ist der Anteil, den die Konkurrenz übrig lässt.",
             "K_i ist der Wettbewerbsdruck an der Quelle: die mit α gewichtete Zahl bestehender Läden in der Umgebung. Markthalle 3, Bio-Markt 2, Feinkost 1, Supermarkt 0,5, Bäcker 0,2. Gastronomie zählt nicht als Wettbewerb, sondern als Affinität. Weil K ≥ 0, gilt immer U ≤ P.",
             beleg6)
 
@@ -294,8 +294,11 @@ def analyse_ansicht(H, stadt, key):
     # 2 Sicht B
     abschnitt(H, "a2", "2 · Sicht B: Die Angebotslücke", "Wo gibt es weniger Läden, als das Umfeld erwarten lässt?")
     aktionstitel(f"Das Umfeld erklärt rund {dev_out * 100:.0f} % der Ladenverteilung, der Rest ist die Lücke." if dev_out is not None else "Das Umfeld erklärt einen Teil der Ladenverteilung, der Rest ist die Lücke.")
-    st.latex(r"\log\mu_c=\beta_0+\delta_{\text{Stadt}(c)}+\beta^{\top}x_c+S_c,\qquad y_c\sim NB(\mu_c)")
-    st.markdown("<p class='klartext'>Zielgröße y ist die Zahl direkter Wettbewerber je Zelle. Fünf Merkmale (Einwohner, Kaufkraft, Alter, Affinität, Tag) erklären, wie viele Läden dort zu erwarten sind. S ist ein räumlicher Effekt für Nachbarschaften, die kein Merkmal fängt.</p>", unsafe_allow_html=True)
+    st.latex(r"y_c\sim \mathrm{NB}(\mu_c,\phi),\quad \operatorname{Var}(y_c)=\mu_c+\phi\,\mu_c^2")
+    st.latex(r"\log\mu_c=\beta_0+\delta_{\text{Stadt}(c)}+X_c^{\top}\beta+S_c,\qquad S_c=\sum_k b_k\exp\!\left(-\frac{d_{ck}^2}{2s^2}\right)")
+    st.markdown("<p class='klartext'>Zielgröße y ist die Zahl direkter Wettbewerber je Zelle, mit Streuung über dem Poisson-Wert (Negative Binomial). Der Prädiktor nutzt fünf distanzgeglättete Merkmale X (Einwohner, Kaufkraft, Alter, Affinität, Tag) und eine Basis räumlicher Gauß-Kerne S für Nachbarschaften, die kein Merkmal fängt.</p>", unsafe_allow_html=True)
+    st.latex(r"(\hat\beta,\hat b)=\arg\max\left(\log L-\tfrac{\lambda}{2}\|b\|_2^2\right)")
+    st.markdown(f"<p class='klartext'>Geschätzt wird mit einer Ridge-Strafe auf die Kern-Gewichte b. Den Parameter λ wählt die räumlich geblockte Kreuzvalidierung so, dass die Devianz außerhalb der Stichprobe −2 log L<sub>test</sub> minimal ist (gewählt: λ = {f0(lm.get('s_lambda', 0))}).</p>", unsafe_allow_html=True)
     c1, c2 = st.columns(2, gap="medium")
     with c1:
         H.exhibit_titel("Modellvergleich", f"Test-Devianz, kleiner ist besser. Gewählt: {str(lm.get('variante', '–')).replace('_', ' ')}")
@@ -303,8 +306,8 @@ def analyse_ansicht(H, stadt, key):
         if td:
             md = pd.DataFrame({"Modell": [m.replace("_", " ") for m in td], "Devianz": list(td.values()), "Gewählt": [m == lm.get("variante") for m in td]})
             st.altair_chart(H.theme_chart(alt.Chart(md).mark_bar().encode(
-                y=alt.Y("Modell:N", sort=None, title=None), x=alt.X("Devianz:Q", title="Test-Devianz −2 log L", scale=alt.Scale(zero=False, domain=[float(min(td.values())) * 0.97, float(max(td.values())) * 1.01])),
-                color=alt.condition("datum.Gewählt", alt.value("#2C6EF2"), alt.value("#B9BDC6")), tooltip=["Modell", alt.Tooltip("Devianz:Q", format=".0f")]).properties(height=150)), width="stretch")
+                y=alt.Y("Modell:N", sort=None, title=None, axis=alt.Axis(labelLimit=200)), x=alt.X("Devianz:Q", title="Test-Devianz −2 log L", scale=alt.Scale(zero=False)),
+                color=alt.condition("datum.Gewählt", alt.value("#2C6EF2"), alt.value("#B9BDC6")), tooltip=["Modell", alt.Tooltip("Devianz:Q", format=".0f")]).properties(height=170)), width="stretch")
         st.markdown(f"<p class='klein'>Auswahlregel: Ein komplexeres Modell nur, wenn es die Test-Devianz um mindestens {int(P['min_verbesserung_modell'] * 100)} % senkt. Welche Variante gilt, steht in luecke_modell.json.</p>", unsafe_allow_html=True)
     with c2:
         H.exhibit_titel("Treiber", "Koeffizient mit ±1,96 Standardfehler, standardisierte Merkmale")
@@ -317,12 +320,11 @@ def analyse_ansicht(H, stadt, key):
         neg = lm.get("negative_vorzeichen", [])
         if neg:
             st.markdown(f"<p class='klein'><b>Unerwartetes Vorzeichen:</b> {escape(', '.join(neg))}. Es wird berichtet und nicht korrigiert. Die Standardfehler sind zu klein, weil Nachbarzellen nicht unabhängig sind, sie dienen nur zur Orientierung.</p>", unsafe_allow_html=True)
-    st.latex(r"g_c=\sum_j(\hat y_j-y_j)\,f(d_{cj})")
-    st.markdown("<p class='klartext'>Die Lücke ist erwartete minus vorhandene Läden, über die Laufweite geglättet. Positiv heißt: Im Umfeld stehen weniger Läden, als die Merkmale erwarten lassen.</p>", unsafe_allow_html=True)
+    st.latex(r"g_c=\sum_{j\in I}(\hat\mu_j-y_j)\,f(d_{cj})")
+    st.markdown("<p class='klartext'>Die Angebotslücke aggregiert das Faltungsresiduum der konditionalen Erwartung: erwartete minus vorhandene Läden, über die Laufweite geglättet, summiert über die Stadtzellen I. Positiv heißt: Im Umfeld stehen weniger Läden, als die Merkmale erwarten lassen.</p>", unsafe_allow_html=True)
     with st.expander("Warum Negative Binomial und ein räumlicher Effekt?"):
         st.markdown("**Overdispersion und räumliche Abhängigkeit sind zwei verschiedene Probleme.** Bei Poisson gilt Var = μ. Bei Wettbewerberzahlen streuen manche Gebiete deutlich stärker, die Negative Binomial erlaubt Var = μ + φμ². "
                     "Der räumliche Effekt S fängt davon unabhängig Nachbarschaftsähnlichkeit auf, etwa eine nicht gemessene Einkaufsstraße.")
-        st.latex(r"\operatorname{Var}(y_c)=\mu_c+\phi\mu_c^2")
         st.markdown("**Warum kein OLS?** Die Zielgröße ist eine Zählvariable mit vielen Nullen. log(0) ist nicht definiert, und ein lineares Modell für log(y) wäre ein anderes statistisches Modell.")
     H.quelle("Quelle: luecke_modell.json, Modell über alle Städte gemeinsam. Methodik: Specs/analyse_erklaerung.md.")
 
