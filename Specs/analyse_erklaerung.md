@@ -600,7 +600,17 @@ Beispiel:
 
 bedeutet:
 
-> Der Standort liegt beim Score ungefähr im oberen 3-%-Bereich der betrachteten Stadtzellen.
+> Der Standort liegt beim Score ungefähr im oberen 3-%-Bereich der Geschäftslagen seiner Stadt.
+
+Referenz sind bewusst nur die Geschäftslagen, also die Zellen, die einen Rang bekommen. Gegen alle Stadtzellen gerechnet, darunter Parks, Gleisfelder und Wohnstraßen mit einem Score nahe 0, läge schon eine durchschnittliche Geschäftslage bei einem Prozentrang von 72 bis 80 und jeder Top-Standort bei 99 bis 100.
+
+An der Spitze bleibt der Prozentrang trotzdem eng. Deshalb gibt es zusätzlich
+
+$$
+score\_index = \frac{U_c}{\operatorname{Median}(U \text{ der Geschäftslagen})}
+$$
+
+Ein Wert von 2,5 heißt: 2,5-mal so stark wie eine typische Geschäftslage der Stadt.
 
 ---
 
@@ -1052,6 +1062,7 @@ Besonders wichtige Spalten sind:
 | `w`                      | Wettbewerbsfreiheit                         |
 | `geschaeftslage`         | geeignete Geschäftslage ja/nein             |
 | `rang`                   | Standort-Rang                               |
+| `score_index`            | Score relativ zur typischen Geschäftslage   |
 | `pr_score`               | Prozentrang des Scores                      |
 | `pr_potenzial`           | Prozentrang des Potenzials                  |
 | `pr_wettbewerbsfreiheit` | Prozentrang der Wettbewerbsfreiheit         |

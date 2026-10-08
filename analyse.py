@@ -341,9 +341,16 @@ def bewerte_stadt(g: pd.DataFrame, p: dict) -> tuple[pd.DataFrame, dict]:
     g["u_anw"], g["u_tag"], g["u"], g["w"] = r["UA"], r["UT"], r["U"], r["W"]
     g["geschaeftslage"] = lage
     g["rang"] = raenge(r["U"], in_stadt & lage)
+    # Referenz der Prozentränge sind die Geschäftslagen der Stadt, also genau die Zellen, die einen
+    # Rang bekommen. Gegen alle Stadtzellen (Parks, Gleise, Wohnstraßen mit U nahe 0) läge schon eine
+    # durchschnittliche Geschäftslage bei PR 75 und jeder Top-Standort bei 99 bis 100.
+    referenz = in_stadt & lage
     for spalte, wert in [("pr_score", r["U"]), ("pr_potenzial", r["P"]),
                          ("pr_wettbewerbsfreiheit", r["W"]), ("pr_affinitaet", q)]:
-        g[spalte] = 100 * prozentrang(wert, wert[in_stadt])
+        g[spalte] = 100 * prozentrang(wert, wert[referenz])
+    # U / Median(U der Geschäftslagen): 2,5 heißt 2,5-mal so stark wie eine typische Geschäftslage.
+    # Unterscheidet die Spitze, wo der Prozentrang eng wird. Nur innerhalb einer Stadt vergleichbar.
+    g["score_index"] = r["U"] / np.median(r["U"][referenz])
     g["anteil_tag"] = np.divide(r["PT"], r["P"], out=np.full(len(g), np.nan), where=r["P"] > 0)
     # Feste Vielfache von theta liefen ins Leere, sobald theta groß ist; Quantile der eigenen
     # Stadt geben in jeder Stadt und für jedes theta eine nutzbare Einteilung.
@@ -585,7 +592,9 @@ def angebotsluecke(alle: dict[str, pd.DataFrame], ctxs: dict, p: dict) -> dict:
         resid = (g["y_erwartet"] - g["y_direkt"]).to_numpy()
         g["luecke"] = paare.summe(resid, paare.f(p["h_anwohner_m"]))
         m = g["in_stadt"].to_numpy()
-        g["pr_luecke"] = 100 * prozentrang(g["luecke"].to_numpy(), g.loc[m, "luecke"].to_numpy())
+        # Gleiche Referenz wie pr_score (Geschäftslagen), sonst misst der Konsens zwei Maßstäbe.
+        ref = m & g["geschaeftslage"].to_numpy(bool)
+        g["pr_luecke"] = 100 * prozentrang(g["luecke"].to_numpy(), g.loc[ref, "luecke"].to_numpy())
         # Abschnitt 22: Konsens, wenn beide Sichten den Standort vorn sehen.
         g["konsens"] = (g["pr_score"] >= p["konsens_schwelle"]) & (g["pr_luecke"] >= p["konsens_schwelle"])
         summe_ist = g.loc[m, "y_direkt"].sum()
@@ -875,10 +884,10 @@ def main() -> None:
               "der k besten Einzelstandorte")
 
         g.to_csv(ordner / f"{s}_scored.csv", index=False, float_format="%.6g")
-        spalten = ["rang", "h3", "pr_score", "pr_potenzial", "pr_wettbewerbsfreiheit", "pr_affinitaet",
+        spalten = ["rang", "h3", "score_index", "pr_score", "pr_potenzial", "pr_wettbewerbsfreiheit", "pr_affinitaet",
                    "pr_luecke", "konsens", "profil"] + (["top10_anteil"] if not args.ohne_robustheit else [])
         top = g[g["rang"] <= p["top_n"]].sort_values("rang")[spalten]
-        print(top.to_string(index=False, float_format=lambda x: f"{x:.0f}" if abs(x) >= 1 else f"{x:.2f}"))
+        print(top.to_string(index=False, float_format=lambda x: f"{x:.0f}" if abs(x) >= 10 else f"{x:.2f}"))
         print(f"  geschrieben: {ordner.relative_to(ROOT)}/{s}_scored.csv ({len(g):,} Zeilen)")
 
 

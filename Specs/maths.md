@@ -318,6 +318,12 @@ $PR(W_c),$
 
 $PR(q_c).$
 
+Referenz der Prozentränge sind die Geschäftslagen der Stadt, nicht alle Stadtzellen. Sonst drücken Parks und Wohnstraßen mit $U_c \approx 0$ jeden brauchbaren Standort an den oberen Rand. Für $PR(g_c)$ gilt dieselbe Referenz. Zusätzlich wird
+
+$U_c / \operatorname{Median}(U \text{ der Geschäftslagen})$
+
+ausgegeben, weil der Prozentrang an der Spitze kaum noch unterscheidet.
+
 Dadurch lässt sich für einen Standort getrennt erkennen, ob sein guter Rang beispielsweise durch
 
 - besonders viel Nachfrage,
