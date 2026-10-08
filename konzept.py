@@ -41,8 +41,8 @@ WERT = [
     {"farbe": "#0B1B4D", "titel": "Grab & go for the working day",
      "text": "Frische Sandwiches, Säfte und Snacks für den Weg zwischen zwei Terminen. In der App bezahlen und einfach gehen.",
      "plakette": ["No", "checkout"], "bild": "wert_tag"},
-    {"farbe": "#002C77", "titel": "Gather in the evening",
-     "text": "Frisches Brot, Käse, Dips und etwas Gutes zu trinken, auch noch spät. Für Besuch, Picknick und den spontanen Abend.",
+    {"farbe": "#002C77", "titel": "Quality snacks for the evening",
+     "text": "Brot, Käse, Aufschnitt, Oliven, Nüsse, Obst und Wein, auch noch spät. Für Besuch, Picknick und den spontanen Abend.",
      "plakette": ["Fresh", "bread, late"], "bild": "wert_abend"},
 ]
 
