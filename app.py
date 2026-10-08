@@ -214,7 +214,7 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .w-promo .t {{ padding: 1.8rem 1.7rem; display: flex; flex-direction: column; justify-content: center; }}
 .w-promo h3 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.9rem; line-height: 1.15; color: #CEECFF; margin: 0 0 0.8rem 0; }}
 .w-promo p {{ font-size: 0.94rem; line-height: 1.55; margin: 0; color: #FFFFFF; }}
-.w-promo .b {{ background-size: cover; background-position: center; position: relative; }}
+.w-promo .b {{ background-size: cover; background-position: center 25%; position: relative; }}
 .w-badge {{ position: absolute; top: 1rem; right: 1rem; width: 6rem; height: 6rem; border-radius: 50%; background: #CEECFF; color: {MIDNIGHT}; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: Georgia, "Times New Roman", serif; line-height: 1.05; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25); }}
 .w-badge b {{ font-size: 1.35rem; font-weight: 400; display: block; }}
 .w-badge span {{ font-size: 0.95rem; font-style: italic; display: block; }}
@@ -651,7 +651,7 @@ if ansicht == "Konzept":
         for ic, t, x in K.USPS)
     wert = "".join(
         f'<div class="w-promo" style="background:{w["farbe"]}"><div class="t"><h3>{escape(w["titel"])}</h3><p>{escape(w["text"])}</p></div>'
-        + flaeche(w["bild"], "b", f'<div class="w-badge"><b>{escape(w["plakette"][0])}</b><span>{escape(w["plakette"][1])}</span></div>')
+        + flaeche(w["bild"], "b")
         + "</div>" for w in K.WERT)
     sortiment = "".join(
         f'<div class="w-card slim">{flaeche(bild, "b")}<div class="i"><h4>{escape(titel)}</h4></div></div>'
