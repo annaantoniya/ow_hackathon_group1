@@ -196,10 +196,10 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 /* Startseite: Aufbau nach dem Vorbild von M&S Food und Waitrose. Überschriften in der Serifenschrift der Marke. */
 .w-intro h1 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 2.5rem; line-height: 1.15; letter-spacing: -0.015em; color: {T['titel']}; margin: 0.3rem 0 1rem 0; }}
 .w-intro h1 u {{ text-decoration-thickness: 3px; text-underline-offset: 7px; }}
-.w-intro-zeile {{ display: grid; grid-template-columns: 1fr 11rem; border-top: 1px solid {T['titel']}; }}
+.w-intro-zeile {{ display: flex; justify-content: flex-end; border-top: 1px solid {T['titel']}; padding: 0.7rem 0 0.2rem 0; }}
 .w-intro-zeile p {{ margin: 0; padding: 1.1rem 2rem 1.2rem 0; font-size: 0.95rem; line-height: 1.6; color: {T['text']}; max-width: 54rem; }}
-.w-intro-zeile .l {{ border-left: 1px solid {T['titel']}; display: flex; align-items: center; justify-content: center; }}
-.w-intro-zeile img {{ width: 4.4rem; height: 4.4rem; border-radius: 50%; }}
+.w-intro-zeile .l {{ display: flex; align-items: center; justify-content: center; }}
+.w-intro-zeile img {{ width: 3.2rem; height: 3.2rem; border-radius: 50%; }}
 .w-split {{ display: grid; grid-template-columns: 1.3fr 1fr; min-height: 420px; margin-top: 0.8rem; }}
 .zm {{ overflow: hidden; position: relative; }}
 .zm::before {{ content: ""; position: absolute; inset: 0; background-image: inherit; background-size: cover; background-position: inherit; transform: scale(var(--z, 1.25)); transform-origin: var(--o, center); }}
@@ -736,7 +736,7 @@ if ansicht == "Konzept":
     st.markdown(f"""
 <div class="w-intro">
   <h1>{titel_html}</h1>
-  <div class="w-intro-zeile"><p>{escape(K.INTRO_TEXT)}</p><div class="l">{f'<img src="{logo}" alt="Logo">' if logo else ""}</div></div>
+  <div class="w-intro-zeile"><div class="l">{f'<img src="{logo}" alt="Logo">' if logo else ""}</div></div>
 </div>
 
 <div class="w-split">
