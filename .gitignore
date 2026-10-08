@@ -1,3 +1,10 @@
 .venv/
 __pycache__/
 .DS_Store
+zensus/
+cache/
+# Aus data/ nur die Eingaben für analyse.py versionieren; Ergebnisse lassen sich neu rechnen.
+data/*
+!data/README.md
+!data/*_grid.csv
+!data/*_pois.csv

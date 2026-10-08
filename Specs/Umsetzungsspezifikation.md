@@ -265,7 +265,8 @@ Eine Zelle ist eine Geschäftslage, wenn in ihr und ihren sechs direkten Nachbar
 | Spalte | Berechnung |
 |---|---|
 | `rang` | Rang nach U, absteigend, je Stadt, nur Zellen mit `in_stadt` und `geschaeftslage` |
-| `pr_score`, `pr_potenzial`, `pr_wettbewerbsfreiheit`, `pr_affinitaet` | Prozentränge von U, P, W und q je Stadt über alle Zellen mit `in_stadt`, Werte von 0 bis 100 |
+| `pr_score`, `pr_potenzial`, `pr_wettbewerbsfreiheit`, `pr_affinitaet` | Prozentränge von U, P, W und q je Stadt, Referenz sind die Geschäftslagen (`in_stadt` und `geschaeftslage`), Werte von 0 bis 100 |
+| `score_index` | U geteilt durch den Median von U über die Geschäftslagen der Stadt. 2,5 heißt 2,5-mal so stark wie eine typische Geschäftslage. Nur innerhalb einer Stadt vergleichbar |
 | `anteil_tag` | Tagesteil des Potenzials geteilt durch das gesamte Potenzial |
 | `profil` | `Mittagsstandort`, wenn `anteil_tag` über 1,5 mal theta liegt. `Feierabendstandort`, wenn er unter 0,5 mal theta liegt. Sonst `Ganztagsstandort`. |
 
@@ -347,7 +348,7 @@ Ein positiver Wert bedeutet: Im Umfeld gibt es weniger Läden, als die Merkmale 
 | Ausgabe | Inhalt |
 |---|---|
 | Spalten `y_direkt`, `y_erwartet` | Vorhandene und erwartete Zahl direkter Wettbewerber je Zelle |
-| Spalten `luecke`, `pr_luecke` | Geglättete Lücke und ihr Prozentrang je Stadt über Zellen mit `in_stadt` |
+| Spalten `luecke`, `pr_luecke` | Geglättete Lücke und ihr Prozentrang je Stadt, Referenz sind die Geschäftslagen |
 | Spalten `beitrag_einwohner`, `beitrag_kaufkraft`, `beitrag_alter`, `beitrag_affinitaet`, `beitrag_tag` | Beiträge der Merkmale zur Vorhersage |
 | Spalte `konsens` | Wahr, wenn `pr_score` und `pr_luecke` beide mindestens 90 betragen |
 | `data/luecke_modell.json` | Koeffizienten, Standardfehler, Dispersion, gewählte Variante, erklärte Devianz in und außerhalb der Stichprobe |
