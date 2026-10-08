@@ -299,6 +299,7 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .frage {{ border-left: 4px solid {T['akzent']}; padding: 0.2rem 0 0.2rem 1rem; margin: 1.4rem 0 0.8rem 0; font-weight: 700; color: {T['titel']}; font-size: 1.05rem; line-height: 1.4; max-width: 56rem; }}
 .frage small {{ display: block; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.68rem; color: {T['akzent']}; margin-bottom: 0.2rem; }}
 .fuss {{ margin-top: 1.4rem; font-size: 0.72rem; color: {T['grau']}; line-height: 1.5; }}
+.st-key-vglkarte [data-testid="stFullScreenFrame"], .st-key-vglkarte [data-testid="stElementContainer"], .st-key-vglkarte [data-testid="stDeckGlJsonChart"], .st-key-vglkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-vglkarte [data-testid="stDeckGlJsonChart"] iframe {{ height: 300px !important; max-height: 300px !important; min-height: 0 !important; }}
 .st-key-pilotkarte [data-testid="stFullScreenFrame"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stDeckGlJsonChart"], .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] iframe {{ height: 520px !important; }}
 .st-key-pilotkarte .panel {{ height: 520px; }}
 

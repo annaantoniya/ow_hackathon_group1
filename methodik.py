@@ -145,9 +145,8 @@ def schritt(nr, titel, formel, klartext, herleitung, beleg):
     with links:
         aktionstitel(f"{nr}  {titel}")
         st.latex(formel)
-        st.markdown(f'<p class="klartext">{klartext}</p>', unsafe_allow_html=True)
-        with st.expander("Herleitung"):
-            st.markdown(herleitung)
+        erster = klartext.split(". ")[0].rstrip(".") + "."
+        st.markdown(f'<p class="klartext">{erster}</p>', unsafe_allow_html=True)
     with rechts:
         beleg()
 
@@ -274,31 +273,15 @@ def analyse_ansicht(H, stadt, key):
             "K_i ist der Wettbewerbsdruck an der Quelle: die mit α gewichtete Zahl bestehender Läden in der Umgebung. Markthalle 3, Bio-Markt 2, Feinkost 1, Supermarkt 0,5, Bäcker 0,2. Gastronomie zählt nicht als Wettbewerb, sondern als Affinität. Weil K ≥ 0, gilt immer U ≤ P.",
             beleg6)
 
-    # Vom Score zum Rang
-    st.markdown("<div class='vkopf' style='font-size:1.05rem'>Vom Score zum Rang</div>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3, gap="medium")
-    with c1:
-        kasten("Geschäftslagen-Filter", f"Mindestens {P['n_min_geschaeftslage']} POIs in Zelle und Ring 1",
-               f"<ul><li>{' · '.join(f'{n}: {v['anteil_lagen'] * 100:.0f} %' for n, v in daten.items())} der Stadtzellen sind Geschäftslagen.</li>"
-               "<li>Parks, Gleise und Wohnstraßen fallen heraus. Nur Geschäftslagen bekommen einen Rang.</li></ul>")
-    with c2:
-        kasten("Prozentrang und Score-Index", "Referenz sind die Geschäftslagen der Stadt",
-               f"<ul><li>Score-Index = U geteilt durch den Median der Geschäftslagen.</li><li>Top 10 in {escape(stadt)}: {f1(d['index_top10'][0])} bis {f1(d['index_top10'][1])}-mal so stark wie eine typische Geschäftslage.</li>"
-               "<li>Nur innerhalb einer Stadt vergleichbar.</li></ul>")
-    with c3:
-        kasten("Profil", f"Quantile von P_T/P: oberste {int((1 - P['profil_quantil_hoch']) * 100)} % Mittag, unterste {int(P['profil_quantil_tief'] * 100)} % Feierabend",
-               f"<ul><li>{escape(stadt)}: Mittag {d['mittag'] * 100:.0f} %, Ganztag {d['ganztag'] * 100:.0f} %, Feierabend {d['abend'] * 100:.0f} % der Geschäftslagen.</li>"
-               "<li>Mittag spricht eher für Deli, Feierabend eher für Markt.</li></ul>")
-    H.quelle(f"{H.QUELLE} Parameter: analyse.PARAMETER. Methodik: Specs/analyse_erklaerung.md.")
 
     # 2 Sicht B
     abschnitt(H, "a2", "2 · Sicht B: Die Angebotslücke", "Wo gibt es weniger Läden, als das Umfeld erwarten lässt?")
     aktionstitel(f"Das Umfeld erklärt rund {dev_out * 100:.0f} % der Ladenverteilung, der Rest ist die Lücke." if dev_out is not None else "Das Umfeld erklärt einen Teil der Ladenverteilung, der Rest ist die Lücke.")
     st.latex(r"y_c\sim \mathrm{NB}(\mu_c,\phi),\quad \operatorname{Var}(y_c)=\mu_c+\phi\,\mu_c^2")
     st.latex(r"\log\mu_c=\beta_0+\delta_{\text{Stadt}(c)}+X_c^{\top}\beta+S_c,\qquad S_c=\sum_k b_k\exp\!\left(-\frac{d_{ck}^2}{2s^2}\right)")
-    st.markdown("<p class='klartext'>Zielgröße y ist die Zahl direkter Wettbewerber je Zelle, mit Streuung über dem Poisson-Wert (Negative Binomial). Der Prädiktor nutzt fünf distanzgeglättete Merkmale X (Einwohner, Kaufkraft, Alter, Affinität, Tag) und eine Basis räumlicher Gauß-Kerne S für Nachbarschaften, die kein Merkmal fängt.</p>", unsafe_allow_html=True)
+    st.markdown("<p class='klartext'>Zielgröße y: direkte Wettbewerber je Zelle. Fünf distanzgeglättete Merkmale X erklären sie, räumliche Gauß-Kerne S fangen den Rest der Nachbarschaft auf.</p>", unsafe_allow_html=True)
     st.latex(r"(\hat\beta,\hat b)=\arg\max\left(\log L-\tfrac{\lambda}{2}\|b\|_2^2\right)")
-    st.markdown(f"<p class='klartext'>Geschätzt wird mit einer Ridge-Strafe auf die Kern-Gewichte b. Den Parameter λ wählt die räumlich geblockte Kreuzvalidierung so, dass die Devianz außerhalb der Stichprobe −2 log L<sub>test</sub> minimal ist (gewählt: λ = {f0(lm.get('s_lambda', 0))}).</p>", unsafe_allow_html=True)
+    st.markdown(f"<p class='klartext'>Ridge-Strafe auf die Kern-Gewichte b. λ minimiert die Devianz außerhalb der Stichprobe (gewählt: λ = {f0(lm.get('s_lambda', 0))}).</p>", unsafe_allow_html=True)
     c1, c2 = st.columns(2, gap="medium")
     with c1:
         H.exhibit_titel("Modellvergleich", f"Test-Devianz, kleiner ist besser. Gewählt: {str(lm.get('variante', '–')).replace('_', ' ')}")
@@ -321,12 +304,7 @@ def analyse_ansicht(H, stadt, key):
         if neg:
             st.markdown(f"<p class='klein'><b>Unerwartetes Vorzeichen:</b> {escape(', '.join(neg))}. Es wird berichtet und nicht korrigiert. Die Standardfehler sind zu klein, weil Nachbarzellen nicht unabhängig sind, sie dienen nur zur Orientierung.</p>", unsafe_allow_html=True)
     st.latex(r"g_c=\sum_{j\in I}(\hat\mu_j-y_j)\,f(d_{cj})")
-    st.markdown("<p class='klartext'>Die Angebotslücke aggregiert das Faltungsresiduum der konditionalen Erwartung: erwartete minus vorhandene Läden, über die Laufweite geglättet, summiert über die Stadtzellen I. Positiv heißt: Im Umfeld stehen weniger Läden, als die Merkmale erwarten lassen.</p>", unsafe_allow_html=True)
-    with st.expander("Warum Negative Binomial und ein räumlicher Effekt?"):
-        st.markdown("**Overdispersion und räumliche Abhängigkeit sind zwei verschiedene Probleme.** Bei Poisson gilt Var = μ. Bei Wettbewerberzahlen streuen manche Gebiete deutlich stärker, die Negative Binomial erlaubt Var = μ + φμ². "
-                    "Der räumliche Effekt S fängt davon unabhängig Nachbarschaftsähnlichkeit auf, etwa eine nicht gemessene Einkaufsstraße.")
-        st.markdown("**Warum kein OLS?** Die Zielgröße ist eine Zählvariable mit vielen Nullen. log(0) ist nicht definiert, und ein lineares Modell für log(y) wäre ein anderes statistisches Modell.")
-    H.quelle("Quelle: luecke_modell.json, Modell über alle Städte gemeinsam. Methodik: Specs/analyse_erklaerung.md.")
+    st.markdown("<p class='klartext'>Erwartete minus vorhandene Läden, über die Laufweite geglättet. Positiv heißt: Es stehen weniger Läden da, als das Umfeld erwarten lässt.</p>", unsafe_allow_html=True)
 
     # 3 Konsens
     abschnitt(H, "a3", "3 · Konsens: Wo beide Sichten übereinstimmen")
@@ -346,7 +324,6 @@ def analyse_ansicht(H, stadt, key):
         st.latex(r"PR(U)\ge 90\ \wedge\ PR(g)\ge 90")
         st.markdown(f"<p class='klartext'>Sicht A fragt, wie viel Nachfrage ein Laden gewinnt. Sicht B fragt, wo Läden fehlen. Wo beide dasselbe sagen, ist das Urteil am stärksten. Schattiert ist das Konsens-Quadrat, dunkel die Top 10 von {escape(stadt)}.</p>", unsafe_allow_html=True)
         zahlen([(str(v["konsens"]), n) for n, v in daten.items()], spalten=len(daten))
-    H.quelle(f"Quelle: {key}_scored.csv, Geschäftslagen der gewählten Stadt.")
 
     # 4 Absicherung
     abschnitt(H, "a4", "4 · Absicherung: Wie belastbar ist das?")
@@ -355,21 +332,14 @@ def analyse_ansicht(H, stadt, key):
     with c1:
         kasten("Plausibilität", "Trifft das Potenzial reale Ladenstandorte?",
                "<ul>" + "".join(f"<li><b>{escape(n)}:</b> {v['plaus'] * 100:.0f} % der Feinkostläden in den oberen 20 % nach Potenzial (Zufall: 20 %).</li>" for n, v in daten.items() if v["plaus"] is not None)
-               + "<li>Nicht zirkulär: Wettbewerber gehen weder in Nachfrage noch Affinität ein.</li></ul>")
+               + "</ul>")
     with c2:
         kasten("Robustheit", f"{f0(P['n_laeufe'])} Läufe mit zufällig variierten Setzungen",
-               f"<ul><li>Variiert werden {len(analyse.SPANNEN)} Parameter in plausiblen Spannen, darunter Reichweiten, θ und die Wettbewerbsgewichte.</li>"
-               "<li>Sicherer Kandidat: mindestens 70 % der Läufe in den Top 10. Wackelig: unter 30 %.</li></ul>")
-        t10 = lagen.nsmallest(10, "rang")
-        if "top10_anteil" in t10:
-            tb = pd.DataFrame({"Rang": [f"#{int(r)}" for r in t10["rang"]], "Anteil": t10["top10_anteil"] * 100})
-            st.altair_chart(H.theme_chart(alt.Chart(tb).mark_bar(color="#2C6EF2").encode(
-                x=alt.X("Rang:N", sort=None, title=f"Top 10 in {stadt}"), y=alt.Y("Anteil:Q", title="Läufe in den Top 10 (%)", scale=alt.Scale(domain=[0, 100]))).properties(height=140)), width="stretch")
+               f"<ul><li>{len(analyse.SPANNEN)} Parameter variiert. Sicher: mindestens 70 % der Läufe in den Top 10.</li></ul>")
     with c3:
         kasten("Räumliche Kreuzvalidierung", f"{P['cv_teile']} Teile, H3-Zellen der Auflösung {P['cv_h3_eltern']} bleiben zusammen",
                f"<ul><li>Erklärte Devianz in der Stichprobe: {lm.get('erklaerte_devianz_in_stichprobe', 0) * 100:.0f} %, außerhalb: {lm.get('erklaerte_devianz_ausserhalb', 0) * 100:.0f} %.</li>"
-               "<li>Benachbarte Zellen liegen nie gleichzeitig in Training und Test. So misst der Test, ob das Modell auch für unbekannte Viertel trägt.</li></ul>")
-    H.quelle("Quelle: <stadt>_plausibilitaet.json, <stadt>_scored.csv (top10_anteil), luecke_modell.json.")
+               "</ul>")
 
     # 5 Portfolio
     abschnitt(H, "a5", "5 · Portfolio: Fünf Standorte, die sich ergänzen")
@@ -384,15 +354,13 @@ def analyse_ansicht(H, stadt, key):
             st.markdown(H.tabelle(ptab), unsafe_allow_html=True)
     with c2:
         st.latex(r"F(S)=\sum_i O_i^{A}\frac{X_i^{A}(S)}{X_i^{A}(S)+K_i^{A}+a_0}+\sum_i O_i^{T}\frac{X_i^{T}(S)}{X_i^{T}(S)+K_i^{T}+a_0}")
-        st.markdown(f"<p class='klartext'>F ist die gemeinsam gewonnene Nachfrage. Ein gieriges Verfahren nimmt in jedem Schritt den Standort mit dem größten Zugewinn. Weil F submodular ist, erreicht es mindestens 1 − 1/e ≈ 63 % des Optimums. Der Zugewinn sinkt von Schritt zu Schritt, weil sich die Standorte Kunden teilen.</p>", unsafe_allow_html=True)
-    H.quelle(f"Quelle: {key}_portfolio.csv; Faktor aus analyse.portfolio() live berechnet.")
+        st.markdown(f"<p class='klartext'>Gieriges Verfahren: Jeder Schritt nimmt den Standort mit dem größten Zugewinn. F ist submodular, daher mindestens 1 − 1/e ≈ 63 % des Optimums.</p>", unsafe_allow_html=True)
 
     # 6 Grenzen
     abschnitt(H, "a6", "6 · Grenzen")
-    kasten("Was das Modell nicht kann", "Ehrlich bleiben ist Teil der Methode",
-           "<ul><li><b>Modell statt Messung:</b> Es kennt keine Umsätze und ist nicht kalibriert. Alle Parameter sind Setzungen, der Robustheitstest zeigt ihren Einfluss.</li>"
-           "<li><b>Miete statt Kaufkraft:</b> Bestandsmieten vom Mai 2022 sind nur ein Ersatz für das fehlende Einkommen.</li>"
-           "<li><b>Index statt Personenzahl:</b> Die Tagesbevölkerung ist ein gewichteter Index. Distanzen sind Luftlinie mal 1,3 ohne Hindernisse.</li></ul>")
+    kasten("Grenzen", "Ehrlich bleiben ist Teil der Methode",
+           "<ul><li><b>Modell statt Messung:</b> keine Umsätze, alle Parameter sind Setzungen.</li>"
+           "<li><b>Ersatzgrößen:</b> Miete für Kaufkraft, Index für Tagesbevölkerung.</li></ul>")
     H.bumper("Der Score ordnet Standorte, er sagt keinen Umsatz voraus.")
     H.quelle(H.QUELLE)
 
@@ -642,7 +610,8 @@ def punkte(sb):
 
 def steckbrief_html(sb, name, nah):
     urteil = ("Doppelt bestätigt" if sb["konsens"] else "Nicht doppelt bestätigt")
-    kern = ("Viel passende Kundschaft" if sb["pr_pot"] >= 80 else "Solide Kundschaft") + (", wenig Konkurrenz" if sb["pr_wf"] >= 60 else ", aber schon Konkurrenz vor Ort")
+    fehlt = sb["erwartet"] > 0 and sb["vorhanden"] <= 0.7 * sb["erwartet"]
+    kern = ("Viel passende Kundschaft" if sb["pr_pot"] >= 80 else "Solide Kundschaft") + (", und es fehlen Läden" if fehlt else (", wenig Konkurrenz" if sb["pr_wf"] >= 60 else ", aber schon Konkurrenz vor Ort"))
     pk = "".join(f"<li class='{'plus' if s == '+' else 'minus'}'>{t}</li>" for s, t in punkte(sb))
     sicher = f"bleibt in {sb['sicher'] * 100:.0f} von 100 Testrechnungen unter den besten zehn"
     badge = f"<span class='badge ja'>doppelt bestätigt</span>" if sb["konsens"] else "<span class='badge'>nicht doppelt bestätigt</span>"
@@ -665,6 +634,17 @@ def stadt_satz(sbs, key):
     if k >= 4 and spanne < 3:
         return "Die stärksten Standorte bilden ein " + ("Mittags-" if mittag else "") + "Cluster auf engem Raum, etwas weniger sicher, weil sich viele ähnlich starke Orte die Plätze teilen."
     return "Das Bild ist gemischt: Ein Teil der besten Standorte ist doppelt bestätigt."
+
+
+def _ansicht(pts):
+    """Ausschnitt, in dem alle fünf Standorte sichtbar sind. Die Karte ist flach, deshalb wird der Zoom nach der Höhe der Streuung gewählt."""
+    import pydeck as pdk
+    dlat = (pts["lat"].max() - pts["lat"].min()) * 111.0
+    dlon = (pts["lon"].max() - pts["lon"].min()) * 111.0 * float(np.cos(np.radians(pts["lat"].mean())))
+    spanne_km = max(dlat * 2.6, dlon * 0.9, 1.2)
+    # Zoom 12 zeigt auf 300 px Höhe etwa 4 km; je größer die Streuung, desto kleiner der Zoom
+    zoom = float(np.clip(12.0 - np.log2(max(spanne_km, 4.0) / 4.0), 10.5, 14.0))
+    return pdk.ViewState(latitude=float(pts["lat"].mean()), longitude=float(pts["lon"].mean()), zoom=zoom, min_zoom=8, max_zoom=17)
 
 
 def vergleich_ansicht(H):
@@ -726,9 +706,9 @@ def vergleich_ansicht(H):
 
     # 5 White Spots je Stadt
     abschnitt(H, "v5", "Die White Spots je Stadt: fünf Standorte mit klarem Profil")
-    tabs = st.tabs(list(daten))
-    for tab, (n, v) in zip(tabs, daten.items()):
-        with tab:
+    gew_stadt = st.segmented_control("Stadt", list(daten), default=list(daten)[0], key="vgl_stadt", label_visibility="collapsed") or list(daten)[0]
+    for n, v in [(gew_stadt, daten[gew_stadt])]:  # nur die gewählte Stadt wird gezeichnet, damit die Karte richtig zentriert
+        if True:
             sbs = sb_alle[n]
             aktionstitel(f"{n}: {stadt_satz(sbs, v['key'])}")
             po = pois(v["key"])
@@ -739,11 +719,12 @@ def vergleich_ansicht(H):
                 nah = H.in_der_naehe(v["key"], round(x["lat"], 4), round(x["lon"], 4), 1)
                 nahs.append(("nahe " + nah[0][0]) if nah else n)
             pts = pd.DataFrame({"lat": [x["lat"] for x in sbs], "lon": [x["lon"] for x in sbs], "t": [str(x["rang"]) for x in sbs]})
-            st.pydeck_chart(pdk.Deck(layers=[
-                pdk.Layer("ScatterplotLayer", pts, get_position=["lon", "lat"], get_radius=250, radius_min_pixels=11, radius_max_pixels=11, get_fill_color=[11, 27, 77, 255], stroked=True, get_line_color=[255, 255, 255, 255], line_width_min_pixels=2),
-                pdk.Layer("TextLayer", pts, get_position=["lon", "lat"], get_text="t", get_size=13, get_color=[255, 255, 255, 255])],
-                initial_view_state=pdk.ViewState(latitude=float(pts["lat"].mean()), longitude=float(pts["lon"].mean()), zoom=11.3, min_zoom=8, max_zoom=17), map_style=H.karte_style),
-                width="stretch", height=240)
+            with st.container(key="vglkarte"):
+              st.pydeck_chart(pdk.Deck(layers=[
+                  pdk.Layer("ScatterplotLayer", pts, get_position=["lon", "lat"], get_radius=250, radius_min_pixels=11, radius_max_pixels=11, get_fill_color=[11, 27, 77, 255], stroked=True, get_line_color=[255, 255, 255, 255], line_width_min_pixels=2),
+                  pdk.Layer("TextLayer", pts, get_position=["lon", "lat"], get_text="t", get_size=13, get_color=[255, 255, 255, 255])],
+                  initial_view_state=_ansicht(pts), map_style=H.karte_style),
+                  width="stretch", height=300, key=f"vgl_karte_{v['key']}")
             st.markdown("<div class='sbraster'>" + "".join(steckbrief_html(x, namen[i], nahs[i]) for i, x in enumerate(sbs)) + "</div>", unsafe_allow_html=True)
 
     # 6 Selbst vergleichen
