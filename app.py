@@ -222,7 +222,7 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .w-card {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; }}
 .w-card .b {{ height: 215px; background-size: cover; background-position: center; position: relative; }}
 .w-card .b span {{ position: absolute; left: 0; bottom: 0; background: {MIDNIGHT}; color: #fff; padding: 0.3rem 0.9rem; font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; }}
-.w-card.slim .b {{ height: 175px; }}
+.w-card.slim .b {{ height: auto; aspect-ratio: 16 / 10; background-position: center 45%; }}
 .w-card.slim .i {{ padding: 0.7rem 1.1rem 0.8rem 1.1rem; }}
 .w-card.slim h4 {{ margin: 0; font-size: 1.3rem; }}
 .w-card .i {{ padding: 1rem 1.3rem 1.2rem 1.3rem; }}

@@ -49,7 +49,7 @@ WERT = [
 # Sortiment: sechs Karten mit Bild (Titel, Text, Bildschlüssel)
 SORTIMENT = [
     ("Italian", "Belegte Ciabatta und Panini mit Hähnchen, Avocado, Schinken und Tomate, dazu frische Pasta und Antipasti.", "italienisch"),
-    ("Mediterranean", "Mezze, Hummus, gegrilltes Gemüse und Oliven.", "mediterran"),
+    ("Mediterranean", "Mezze, Hummus, griechischer Salat mit Feta, gegrilltes Gemüse, Oliven und Brot.", "mediterran"),
     ("French bakery", "Pain au chocolat, Palmiers, Pastéis de nata und süße Pastries, frisch gebacken und auch abends noch da.", "franzoesisch"),
     ("Regional, reimagined",
      "Klassiker aus Frankfurt, München und Berlin mit neuem Dreh, zum Beispiel Grüne Soße mit neuen Kartoffeln oder "
