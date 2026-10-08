@@ -7,10 +7,10 @@ Sortiment und Lieferung ändern den Standort-Score nicht, sondern das Format des
 
 # Arbeitstitel. Alle Buchstaben stecken in "Oliver Wyman". Alternativen mit der gleichen Eigenschaft: LEMON, MELON, VINO.
 MARKE = "OLIVE"
-BEZEICHNUNG = "Urban Food Hall & Deli"
+BEZEICHNUNG = "Urbaner Supermarkt mit Deli"
 VOLLER_NAME = "OLIVER WYMAN"
 CLAIM = "Grab. Go. Gather."
-UNTERZEILE = "Fresh food from morning to midnight. No checkout, no queue."
+UNTERZEILE = "Frisch von morgens bis Mitternacht. Keine Kasse, keine Warteschlange."
 VERANSTALTUNG = "Oliver Wyman × STADS Hackathon · 8. Oktober 2026"
 
 BUSINESS_FRAGE = ("In welchen Stadtteilen von München, Frankfurt und Berlin findet ein neuer Laden dieser Art "
@@ -21,8 +21,8 @@ BUSINESS_FRAGE = ("In welchen Stadtteilen von München, Frankfurt und Berlin fin
 HERO_BILD = "hero"
 
 # Einleitung nach dem Vorbild von M&S Food: große Überschrift, Linie, Einleitungstext, rechts das Logo
-INTRO_TITEL = "Fresh food, fast. Late, and without a queue."
-INTRO_UNTERSTRICHEN = "Late"
+INTRO_TITEL = "Frisches Essen, schnell. Auch spät und ohne Warteschlange."
+INTRO_UNTERSTRICHEN = "spät"
 INTRO_TEXT = ("OLIVE ist ein urbaner Supermarkt mit Deli-Theke. Tagsüber holen Berufstätige hier Kaffee, Pastries und ein gesundes "
               "Mittagessen. Abends kaufen Anwohner frisches Brot, Käse, vegane und vegetarische Gerichte und etwas Gutes zu trinken. "
               "Bezahlt wird per App, ohne Kasse.")
@@ -38,24 +38,24 @@ USPS = [
 
 # Wertversprechen: zwei Kacheln, links Farbfläche mit Text, rechts Bild mit Plakette
 WERT = [
-    {"farbe": "#0B1B4D", "titel": "Grab & go for the working day",
+    {"farbe": "#0B1B4D", "titel": "Grab & go für den Arbeitstag",
      "text": "Frische Sandwiches, Säfte und Snacks für den Weg zwischen zwei Terminen. In der App bezahlen und einfach gehen.",
      "plakette": ["No", "checkout"], "bild": "wert_tag"},
-    {"farbe": "#002C77", "titel": "Quality snacks for the evening",
+    {"farbe": "#002C77", "titel": "Hochwertige Snacks für den Abend",
      "text": "Brot, Käse, Aufschnitt, Oliven, Nüsse, Obst und Wein, auch noch spät. Für Besuch, Picknick und den spontanen Abend.",
      "plakette": ["Fresh", "bread, late"], "bild": "wert_abend"},
 ]
 
 # Sortiment: sechs Karten mit Bild (Titel, Text, Bildschlüssel)
 SORTIMENT = [
-    ("Italian", "Belegte Ciabatta und Panini mit Hähnchen, Avocado, Schinken und Tomate, dazu frische Pasta und Antipasti.", "italienisch"),
-    ("Mediterranean", "Mezze, Hummus, griechischer Salat mit Feta, gegrilltes Gemüse, Oliven und Brot.", "mediterran"),
-    ("French bakery", "Pain au chocolat, Palmiers, Pastéis de nata und süße Pastries, frisch gebacken und auch abends noch da.", "franzoesisch"),
-    ("Regional, reimagined",
+    ("Italienisch", "Belegte Ciabatta und Panini mit Hähnchen, Avocado, Schinken und Tomate, dazu frische Pasta und Antipasti.", "italienisch"),
+    ("Mediterran", "Mezze, Hummus, griechischer Salat mit Feta, gegrilltes Gemüse, Oliven und Brot.", "mediterran"),
+    ("Französische Bäckerei", "Pain au chocolat, Palmiers, Pastéis de nata und süße Pastries, frisch gebacken und auch abends noch da.", "franzoesisch"),
+    ("Regional, neu gedacht",
      "Klassiker aus Frankfurt, München und Berlin mit neuem Dreh, zum Beispiel Grüne Soße mit neuen Kartoffeln oder "
      "Leberkäs-Semmel mit eingelegtem Rettich. Lokal, aber nicht klischeehaft.", "regional"),
-    ("Bowls & salads", "Açaí, Poke und saisonale Salate. Große vegane und vegetarische Auswahl.", "bowls"),
-    ("Drinks & cocktails", "Frische Cocktails, Mocktails und Limonaden mit Minze, Beeren und Zitrus, dazu Naturwein und Craft Beer zum Mitnehmen.", "drinks"),
+    ("Bowls & Salate", "Açaí, Poke und saisonale Salate. Große vegane und vegetarische Auswahl.", "bowls"),
+    ("Drinks & Cocktails", "Frische Cocktails, Mocktails und Limonaden mit Minze, Beeren und Zitrus, dazu Naturwein und Craft Beer zum Mitnehmen.", "drinks"),
 ]
 
 # Die Beschreibung der Stadt ist eine Hypothese, abgeleitet aus der Spec (Abschnitt 2).
