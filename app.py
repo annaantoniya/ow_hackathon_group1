@@ -19,6 +19,7 @@ import streamlit as st
 from sklearn.neighbors import BallTree
 
 import konzept as K
+import methodik
 
 DATA = Path(__file__).parent / "data"
 DEMO = DATA / "demo"
@@ -26,7 +27,7 @@ STAEDTE = {"München": "muenchen", "Frankfurt": "frankfurt", "Berlin": "berlin"}
 ERDRADIUS_M = 6_371_000
 ZOOM_STADT = 11.3
 WETTBEWERB_DIREKT = ["deli", "feinkost_kaese", "wein", "bio_markt", "reformhaus", "markthalle", "pasta"]
-ANSICHTEN = ["Konzept", "Karte", "Vergleich", "Analyse"]  # Rangliste, Erklärung und Annahmen sind unten noch im Code, aber nicht mehr in der Navigation
+ANSICHTEN = ["Konzept", "Karte", "Vergleich", "Datengrundlage", "Analyse"]  # Rangliste, Erklärung und Annahmen sind unten noch im Code, aber nicht mehr in der Navigation
 
 # Farben: Midnight für Struktur, Bright Blue für Bedienung, Sky und Blau für Daten, Coral nur für die Top 10
 MIDNIGHT, BLUE, BRIGHT, SKY, CORAL, GREY = "#0B1B4D", "#002C77", "#2C6EF2", "#009DE0", "#EF4E45", "#6B7079"
@@ -55,7 +56,7 @@ TREIBER = {
 GRENZEN = [
     "Das Modell kennt keine Umsätze und ist nicht kalibriert. Der Score ordnet Standorte, er sagt keinen Umsatz voraus.",
     "Alle Parameter sind Setzungen. Der Robustheitstest zeigt, wie stark die Rangfolge von ihnen abhängt.",
-    "Die Miete ist ein Ersatz für Kaufkraft. Sie stammt aus Bestandsmieten vom Mai 2022. Je nach Stadt sind 29 bis 45 Prozent der Werte aus Nachbarzellen geschätzt.",
+    "Die Miete ist ein Ersatz für Kaufkraft. Sie stammt aus Bestandsmieten vom Mai 2022. Ein Teil der Werte ist aus Nachbarzellen geschätzt und markiert (Anteil siehe Tab Datengrundlage).",
     "Mieten sind zwischen Städten nicht vergleichbar. Die Standardansicht bewertet deshalb jede Stadt für sich.",
     "Die Tagesbevölkerung ist ein Index aus Büros, Hochschulen und Haltestellen, keine Personenzahl.",
     "OpenStreetMap ist nicht überall gleich vollständig. Gut kartierte Viertel können zu günstig erscheinen.",
@@ -77,10 +78,10 @@ T = {
     "flaeche": "#181C26" if DUNKEL else "#FFFFFF",
     "sidebar": "#141821" if DUNKEL else "#FFFFFF",
     "feld": "#222735" if DUNKEL else "#F2F3F5",
-    "rand": "#2B3140" if DUNKEL else "#D8DBE0",
+    "rand": "#2B3140" if DUNKEL else "#B4BBC8",
     "text": "#E6E9F0" if DUNKEL else "#1C1E22",
     "titel": "#FFFFFF" if DUNKEL else MIDNIGHT,
-    "grau": "#98A0B3" if DUNKEL else GREY,
+    "grau": "#98A0B3" if DUNKEL else "#4B5262",
     "akzent": "#4C8DFF" if DUNKEL else BRIGHT,
     "balken": "#4C8DFF" if DUNKEL else "#2C6EF2",
     "balken2": "#A9C8FF" if DUNKEL else "#8DB4FF",
@@ -211,7 +212,8 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .spalte li {{ font-size: 0.86rem; line-height: 1.45; margin-bottom: 0.45rem; }}
 
 /* Startseite: Aufbau nach dem Vorbild von M&S Food und Waitrose. Überschriften in der Serifenschrift der Marke. */
-.w-intro h1 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 2.5rem; line-height: 1.15; letter-spacing: -0.015em; color: {T['titel']}; margin: 0.3rem 0 1rem 0; }}
+.w-intro {{ margin-bottom: 1rem; border-bottom: 1px solid {T['titel']}; padding-bottom: 0.9rem; }}
+.w-intro h1 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 2.5rem; line-height: 1.15; letter-spacing: -0.015em; color: {T['titel']}; margin: 0.3rem 0 0 0; }}
 .w-intro h1 u {{ text-decoration-thickness: 3px; text-underline-offset: 7px; }}
 .w-intro-zeile {{ display: flex; justify-content: flex-end; border-top: 1px solid {T['titel']}; padding: 0.7rem 0 0.2rem 0; }}
 .w-intro-zeile p {{ margin: 0; padding: 1.1rem 2rem 1.2rem 0; font-size: 0.95rem; line-height: 1.6; color: {T['text']}; max-width: 54rem; }}
@@ -289,6 +291,17 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .st-key-pilotkarte [data-testid="stFullScreenFrame"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), .st-key-pilotkarte [data-testid="stDeckGlJsonChart"], .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] iframe {{ height: 520px !important; }}
 .st-key-pilotkarte .panel {{ height: 520px; }}
 
+/* Analyse und Datengrundlage */
+.atitel {{ font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; line-height: 1.3; color: {T['titel']}; margin: 0.9rem 0 0.4rem 0; }}
+.klartext {{ font-size: 0.9rem; line-height: 1.5; color: {T['text']}; margin: 0.2rem 0 0.5rem 0; }}
+.ampel {{ display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 50%; margin-right: 0.4rem; }}
+.ampel.g {{ background: #2E9E5B; }} .ampel.y {{ background: #F2B600; }} .ampel.r {{ background: #D6453D; }}
+.fluss {{ display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0.8rem 0 0.4rem 0; }}
+.fluss i {{ font-style: normal; font-size: 1.4rem; color: {T['grau']}; }}
+.fk {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; padding: 0.5rem 0.8rem; font-size: 0.82rem; font-weight: 600; color: {T['titel']}; text-align: center; }}
+.fk small {{ font-weight: 400; color: {T['grau']}; }}
+.fk.dk {{ background: {MIDNIGHT}; color: #fff; border-color: {MIDNIGHT}; }}
+[data-testid="stExpander"] {{ border: 1px solid {T['rand']}; background: {T['flaeche']}; }}
 /* Analyse: Pipeline und Methodik */
 .pipe {{ display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; margin: 0.4rem 0 0.9rem 0; }}
 .pstep {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; border-top: 3px solid {T['akzent']}; padding: 0.7rem 0.8rem 0.8rem 0.8rem; position: relative; }}
@@ -312,12 +325,14 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 /* Kopfzeile: Ansichten zum Durchklicken, Linie unter der ganzen Leiste */
 [data-testid="stElementContainer"]:has([data-testid="stButtonGroup"]) {{ width: 100% !important; }}
 [data-testid="stButtonGroup"] {{ width: 100%; gap: 0; border-bottom: 1px solid {T['rand']}; }}
-[data-testid="stButtonGroup"] button {{ border-radius: 0; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; background: transparent !important; color: {T['grau']}; font-weight: 600; font-size: 1.05rem; padding: 0.6rem 1.4rem; }}
-[data-testid="stButtonGroup"] button:hover {{ color: {T['titel']}; border-bottom-color: {T['rand']}; }}
-[data-testid="stButtonGroup"] button[aria-checked="true"] {{ border-bottom: 3px solid {T['akzent']} !important; }}
-[data-testid="stButtonGroup"] button[aria-checked="true"] * {{ color: {T['titel']} !important; font-weight: 700; }}
-section[data-testid="stSidebar"] [data-testid^="stBaseButton"]:not([data-testid="stBaseButton-headerNoPadding"]) {{ background: {T['feld']}; color: {T['text']}; border: 1px solid {T['rand']}; }}
-[data-testid="stPopover"] button {{ background: {T['flaeche']}; color: {T['text']}; border: 1px solid {T['rand']}; min-height: 2.2rem; }}
+[data-testid="stButtonGroup"] button {{ border-radius: 6px 6px 0 0; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; background: #E3F1FF !important; color: {MIDNIGHT}; font-weight: 600; font-size: 1.05rem; padding: 0.6rem 1.4rem; }}
+[data-testid="stButtonGroup"] button:hover {{ background: #CEECFF !important; border-bottom-color: {BRIGHT}; }}
+[data-testid="stButtonGroup"] button[aria-checked="true"] {{ background: #CEECFF !important; border-bottom: 3px solid {BRIGHT} !important; }}
+[data-testid="stButtonGroup"] button[aria-checked="true"] * {{ color: {MIDNIGHT} !important; font-weight: 800; }}
+[data-testid="stButtonGroup"] button * {{ color: {MIDNIGHT}; }}
+[data-testid="stPopover"] button {{ background: #CEECFF; color: {MIDNIGHT}; border: 1px solid #9DC1FF; font-weight: 600; min-height: 2.4rem; }}
+.st-key-topbar [data-baseweb="select"] > div {{ background: #CEECFF !important; border: 1px solid #9DC1FF !important; }}
+.st-key-topbar [data-baseweb="select"] * {{ color: {MIDNIGHT} !important; font-weight: 600; }}
 [data-testid="stPopoverBody"] {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; }}
 [data-testid="stPopoverBody"] * {{ color: {T['text']}; }}
 /* Karte füllt den Arbeitsbereich */
@@ -667,6 +682,11 @@ def pilotstandorte():
 
 
 # ---------------------------------------------------------------- Seitenleiste
+from types import SimpleNamespace  # noqa: E402
+
+H_METHODIK = SimpleNamespace(kopf=kopf, exhibit_titel=exhibit_titel, bumper=bumper, quelle=quelle, theme_chart=theme_chart,
+                             tabelle=tabelle, QUELLE="Quellen: OpenStreetMap-Mitwirkende, Statistisches Bundesamt (Zensus 2022).")
+
 # Kopfzeile: Ansichten zum Durchklicken, Stadt, und Optionen der Ansicht. Keine Seitenleiste.
 with st.container(key="topbar"):
     nav, c_stadt, c_opt = st.columns([7.4, 1.9, 1.9], vertical_alignment="center")
@@ -674,7 +694,7 @@ with nav:
     gewaehlte_ansicht = st.segmented_control("Ansicht", ANSICHTEN, default="Konzept", key="ansicht",
                                              label_visibility="collapsed")
 ansicht = gewaehlte_ansicht or "Konzept"  # ein Klick auf die aktive Ansicht würde sie abwählen
-if ansicht == "Karte":  # Stadtwahl nur dort, wo sie wirkt
+if ansicht in ("Karte", "Analyse"):  # Stadtwahl nur dort, wo sie wirkt
     stadt_name = c_stadt.selectbox("Stadt", list(STAEDTE), label_visibility="collapsed", key="stadt")
 else:
     stadt_name = st.session_state.get("stadt", "München")
@@ -792,7 +812,7 @@ if ansicht == "Konzept":
         bild_p = f'<div class="foto zm" style="background-image:url({foto})"></div>' if foto else ""
         personas += (f'<div class="review">{bild_p}<div class="kopfzeile">{avatar}'
                      f'<div class="wer"><b>{escape(p["name"])}, {escape(p["alter"])}</b><span>{escape(p["rolle"])} aus {escape(p["stadt"])}</span></div>'
-                     f'<span class="fiktiv">fiktiv</span></div>'
+                     f'</div>'
                      f'<div class="sterne">{"★" * p["sterne"]}</div><h5>{escape(p["titel"])}</h5><p>„{escape(p["text"])}“</p>'
                      + '</div>')
     logos = "".join(f'<div title="{escape(n)}"><img src="{uri(l)}" alt="{escape(n)}"></div>' for n, l in K.LIEFERUNG_PARTNER)
@@ -800,7 +820,6 @@ if ansicht == "Konzept":
     st.markdown(f"""
 <div class="w-intro">
   <h1>{titel_html}</h1>
-  <div class="w-intro-zeile"><div class="l">{f'<img src="{logo}" alt="Logo">' if logo else ""}</div></div>
 </div>
 
 <div class="w-split">
@@ -953,8 +972,9 @@ elif ansicht == "Karte":
     voll_k = st.session_state.get("vb_karte", False)
     st.markdown("""<style>
     [data-testid="stFullScreenFrame"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"]), [data-testid="stDeckGlJsonChart"], [data-testid="stDeckGlJsonChart"] > div,
-    [data-testid="stDeckGlJsonChart"] iframe { height: calc(100vh - 14.2rem) !important; max-height: calc(100vh - 14.2rem) !important; min-height: 420px !important; }
+    [data-testid="stDeckGlJsonChart"] iframe { height: calc(100vh - 11rem) !important; max-height: calc(100vh - 11rem) !important; min-height: 420px !important; }
     .panel { height: calc(100vh - 11rem); }
+    .st-key-rk_karte { margin-bottom: -2.9rem; }
     </style>""", unsafe_allow_html=True)
     links, rechts = (st.container(), None) if voll_k else st.columns([3.4, 1], gap="medium")
     with links:
@@ -1006,82 +1026,13 @@ elif ansicht == "Karte":
                       + '<p class="klein" style="margin-top:0.4rem">Ein Feld anklicken zeigt Kennzahlen.</p></div>'
                       + f'<p class="klein" style="margin-top:1rem">{escape(QUELLE)}</p>')
 
+# ------------------------------------------------------------------ Datengrundlage
+elif ansicht == "Datengrundlage":
+    methodik.daten_ansicht(H_METHODIK)
+
 # ---------------------------------------------------------------------- Analyse
 elif ansicht == "Analyse":
-    kopf("Analyse", "Zwei unabhängige Methoden bewerten jedes Hexagon, der Konsens beider zeigt die stärksten White Spots")
-    pl = lade_json("muenchen_plausibilitaet.json")
-    lm = lade_json("luecke_modell.json")
-    t_pipe, t_modell, t_abs = st.tabs(["Pipeline", "Modell", "Absicherung"])
-
-    with t_pipe:
-        st.markdown(f"""
-<div class="pipe">
-  <div class="pstep"><div class="n">1 Daten</div><b>Zensus und OpenStreetMap</b><span>Einwohner, Miete, Alter aus dem Zensus 2022. Läden, Cafés, Büros und Haltestellen aus OpenStreetMap. <code>datengrundlage.py</code></span></div>
-  <div class="pstep"><div class="n">2 Raster</div><b>H3-Hexagone</b><span>Stadtgrenze plus 1,5 km Puffer, zerlegt in Zellen von rund 0,1 km². Eine Zeile je Zelle. <code>data/&lt;stadt&gt;_grid.csv</code></span></div>
-  <div class="pstep"><div class="n">3 Nachbarn</div><b>Distanzgewicht</b><span>Alle Zellpaare bis 1,5 km Wegstrecke. Nähe zählt mehr: nach 400 m nur noch die Hälfte.</span></div>
-  <div class="pstep"><div class="n">4 Zwei Sichten</div><b>Score und Lücke</b><span>A: Wie viel Nachfrage gewinnt ein neuer Laden? B: Wo fehlen Läden gemessen am Umfeld?</span></div>
-  <div class="pstep"><div class="n">5 Absicherung</div><b>Tests</b><span>Plausibilität, 1.000 Robustheitsläufe, Portfolio aus fünf Standorten.</span></div>
-  <div class="pstep"><div class="n">6 Plattform</div><b>Diese App</b><span>Liest <code>&lt;stadt&gt;_scored.csv</code>. Ränge, Treiber, Profil, Stabilität. <code>analyse.py</code> schreibt sie.</span></div>
-</div>""", unsafe_allow_html=True)
-        c1, c2 = st.columns(2, gap="medium")
-        c1.markdown(f"""<div class="kasten"><h4>Eingabe</h4><div class="frage-k">Was die Analyse bekommt</div>
-<ul><li><b>Zensus 2022</b> (100-m-Gitter): Einwohner, Nettokaltmiete, Altersgruppen, Haushalte. Die Miete dient als Ersatz für Kaufkraft.</li>
-<li><b>OpenStreetMap</b>: 33 Kategorien in vier Gruppen. Direkte Wettbewerber, breite Wettbewerber, Affinität (Cafés, Bars, Kultur) und Frequenz (Bahnhöfe, Büros, Hochschulen).</li>
-<li>Alle Größen werden am Mittelpunkt ihres Hexagons verortet.</li></ul>
-<div class="schwach">Der Zensus zeigt Mai 2022 und kennt kein Einkommen. Je nach Stadt sind 29 bis 45 Prozent der Mietwerte aus Nachbarzellen geschätzt.</div></div>""", unsafe_allow_html=True)
-        c2.markdown(f"""<div class="kasten"><h4>Ausgabe</h4><div class="frage-k">Was die Plattform bekommt</div>
-<ul><li><b>score, rang, pr_score</b>: Standort-Score und seine Prozentränge.</li>
-<li><b>p_anw, p_tag, w</b>: Potenzial der Anwohner, Potenzial der Tagesbevölkerung und Wettbewerbsfreiheit.</li>
-<li><b>luecke, pr_luecke, konsens</b>: Angebotslücke und Kennzeichnung, wenn beide Sichten vorn liegen.</li>
-<li><b>profil</b>: Mittags-, Feierabend- oder Ganztagsstandort.</li>
-<li><b>top10_anteil</b>: Wie oft ein Standort in 1.000 Läufen unter den Top 10 war.</li></ul>
-<div class="schwach">Alles ist reproduzierbar: fester Zufallsstartwert 42, jedes Skript liefert bei gleicher Eingabe dasselbe Ergebnis.</div></div>""", unsafe_allow_html=True)
-
-    with t_modell:
-        a, b = st.columns(2, gap="medium")
-        a.markdown(f"""<div class="kasten"><h4>Sicht A: Der Score</h4><div class="frage-k">Wie viel passende Nachfrage würde ein neuer Laden hier gewinnen?</div>
-<ol><li><b>Nachfrage der Anwohner.</b> Einwohner mal Anteil der 20- bis 49-Jährigen mal Kaufkraftfaktor aus der Miete.</li>
-<li><b>Tagesbevölkerung.</b> Ein Index aus Bahnhöfen, Büros, Hochschulen und Haltestellen, weil es keine Personenzahlen gibt.</li>
-<li><b>Affinität.</b> Ein Faktor für das Umfeld (Cafés, Restaurants, Bars, Kultur), gebildet mit einer Hauptkomponentenanalyse.</li>
-<li><b>Potenzial P.</b> Nachfrage, die ein Laden ohne jeden Wettbewerb gewinnen würde. Wer 400 m entfernt wohnt, zählt halb.</li>
-<li><b>Wettbewerb.</b> Das Huff-Modell verteilt die Nachfrage auf alle Läden in Reichweite. Markthalle zählt 3, Bio-Markt 2, Feinkost 1, Supermarkt 0,5, Bäcker 0,2.</li>
-<li><b>Score U = P mal W.</b> W ist der Anteil, den der Wettbewerb übrig lässt, und liegt zwischen 0 und 1.</li></ol>
-<div class="schwach">Diese Zerlegung liefert zugleich die Erklärung: gut wegen hohem Potenzial, wenig Wettbewerb oder beidem. Alle Parameter sind Setzungen ohne Messung.</div></div>""", unsafe_allow_html=True)
-        b.markdown(f"""<div class="kasten"><h4>Sicht B: Die Angebotslücke</h4><div class="frage-k">Wo gibt es weniger Läden, als das Umfeld erwarten lässt?</div>
-<ol><li><b>Zielgröße.</b> Zahl der direkten Wettbewerber je Zelle (Deli, Feinkost, Bio, Markthalle, Wein, Pasta).</li>
-<li><b>Fünf Merkmale</b> je Stadt standardisiert: Einwohner, Kaufkraft, Alter, Affinität, Tagesbevölkerung im Umfeld.</li>
-<li><b>Regression.</b> Drei Modelle werden verglichen: Poisson, negativ-binomial und negativ-binomial mit räumlichem Effekt. Das mit der kleinsten Test-Devianz gewinnt.</li>
-<li><b>Lücke g.</b> Erwartete minus vorhandene Läden, über die Laufweite geglättet. Positiv heißt: es fehlen Läden.</li>
-<li><b>Konsens.</b> Ein Standort ist Konsens, wenn Score und Lücke beide im obersten Zehntel liegen (Prozentrang mindestens 90).</li></ol>
-<div class="schwach">Die Gewichte kommen aus den Daten statt aus unseren Setzungen. Die Schwäche: Das Modell lernt, wo Läden stehen, nicht, wo sie sich lohnen.</div></div>""", unsafe_allow_html=True)
-        if lm:
-            gewaehlt_m = lm.get("variante", "–").replace("_", "-")
-            koef = lm.get("koeffizienten", {})
-            st.markdown(f"""<div class="zahlen">
-<div class="zahl"><b>{lm.get("erklaerte_devianz_ausserhalb", 0) * 100:.0f} %</b><span>der Ladenverteilung erklärt, außerhalb der Stichprobe getestet</span></div>
-<div class="zahl"><b>{escape(gewaehlt_m)}</b><span>gewähltes Modell. Poisson hätte {lm["test_devianz"]["poisson"]:.0f} Test-Devianz, gewählt wurde {lm["test_devianz"]["negativ_binomial"]:.0f}</span></div>
-<div class="zahl"><b>+{koef.get("einwohner", 0):.2f}</b><span>Koeffizient Einwohner im Umfeld, der stärkste Treiber</span></div>
-<div class="zahl"><b>{koef.get("alter", 0):+.2f}</b><span>Koeffizient Alter. Das Vorzeichen ist unerwartet negativ und wird berichtet, nicht korrigiert</span></div>
-</div>""", unsafe_allow_html=True)
-
-    with t_abs:
-        c1, c2, c3 = st.columns(3, gap="medium")
-        anteil = f"{pl['anteil_pois_in_top_zellen'] * 100:.0f} %" if pl else "–"
-        c1.markdown(f"""<div class="kasten"><h4>Plausibilitätstest</h4><div class="frage-k">Sagt das Potenzial voraus, wo heute Feinkostläden stehen?</div>
-<div class="gross" style="font-size:2.4rem">{anteil}</div>
-<p>der direkten Wettbewerber liegen in den 20 Prozent Zellen mit dem höchsten Potenzial. Ohne Vorhersagekraft wären es 20 Prozent (Stand: München).</p>
-<p>Der Test ist nicht zirkulär: Wettbewerber gehen weder in die Nachfrage noch in die Affinität ein.</p></div>""", unsafe_allow_html=True)
-        c2.markdown(f"""<div class="kasten"><h4>Robustheit</h4><div class="frage-k">Wie stark hängt die Rangfolge an unseren Setzungen?</div>
-<p>Alle Parameter werden bis zu 1.000 Mal innerhalb plausibler Spannen zufällig verändert, etwa die Reichweiten, der Tagesanteil und die Wettbewerbsgewichte.</p>
-<p>Je Zelle zählt, wie oft sie unter den Top 10 landet. Ab 70 Prozent heißt <b>sicherer Kandidat</b>, unter 30 Prozent <b>wackeliger Kandidat</b>. Das steht in Rangliste und Erklärung.</p></div>""", unsafe_allow_html=True)
-        c3.markdown(f"""<div class="kasten"><h4>Portfolio</h4><div class="frage-k">Welche fünf Standorte ergänzen sich?</div>
-<p>Ein gieriges Verfahren wählt Schritt für Schritt den Standort, der die gemeinsam gewonnene Nachfrage am meisten erhöht. Standorte, die sich gegenseitig Kunden wegnehmen, fallen heraus.</p>
-<p>Das Verfahren erreicht mindestens 63 Prozent des Optimums, weil die Zielfunktion submodular ist.</p></div>""", unsafe_allow_html=True)
-        st.markdown(f"""<div class="kasten" style="margin-top:0.7rem"><h4>Was das Modell nicht kann</h4>
-<ul><li>Es kennt keine Umsätze und ist nicht kalibriert. Der Score ordnet Standorte, er sagt keinen Umsatz voraus.</li>
-<li>Die Tagesbevölkerung ist ein Index, keine Personenzahl. Distanzen sind Luftlinie mal 1,3, Flüsse und Bahntrassen zählen nicht als Hindernis.</li>
-<li>OpenStreetMap ist nicht überall gleich vollständig, und Ladengröße und Qualität sind unbekannt.</li></ul></div>""", unsafe_allow_html=True)
-    quelle(QUELLE + " Methodik: Specs/maths.md, Umsetzung: analyse.py.")
+    methodik.analyse_ansicht(H_METHODIK, stadt_name, key)
 
 # ------------------------------------------------------------------- Rangliste
 elif ansicht == "Rangliste":
