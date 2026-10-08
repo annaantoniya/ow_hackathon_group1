@@ -222,6 +222,9 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .w-card {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; }}
 .w-card .b {{ height: 215px; background-size: cover; background-position: center; position: relative; }}
 .w-card .b span {{ position: absolute; left: 0; bottom: 0; background: {MIDNIGHT}; color: #fff; padding: 0.3rem 0.9rem; font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; }}
+.w-card.slim .b {{ height: 175px; }}
+.w-card.slim .i {{ padding: 0.7rem 1.1rem 0.8rem 1.1rem; }}
+.w-card.slim h4 {{ margin: 0; font-size: 1.3rem; }}
 .w-card .i {{ padding: 1rem 1.3rem 1.2rem 1.3rem; }}
 .w-card h4 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.45rem; line-height: 1.15; margin: 0 0 0.4rem 0; color: {T['titel']}; }}
 .w-card p {{ margin: 0; font-size: 0.88rem; line-height: 1.5; color: {T['text']}; }}
@@ -651,7 +654,7 @@ if ansicht == "Konzept":
         + flaeche(w["bild"], "b", f'<div class="w-badge"><b>{escape(w["plakette"][0])}</b><span>{escape(w["plakette"][1])}</span></div>')
         + "</div>" for w in K.WERT)
     sortiment = "".join(
-        f'<div class="w-card">{flaeche(bild, "b")}<div class="i"><h4>{escape(titel)}</h4><p>{escape(text)}</p></div></div>'
+        f'<div class="w-card slim">{flaeche(bild, "b")}<div class="i"><h4>{escape(titel)}</h4></div></div>'
         for titel, text, bild in K.SORTIMENT)
     staedte = ""
     for c in K.STAEDTE:
