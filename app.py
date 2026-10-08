@@ -484,7 +484,7 @@ def legende_html(ebene: str, stadt: str, nur_lagen: bool, senkrecht: bool) -> st
     rampe = RAMPE_DUNKEL if KARTE_DUNKEL else RAMPE_HELL
     verlauf = ", ".join(f"rgb({r}, {g}, {b})" for r, g, b in rampe)
     nl = NICHT_LAGE_DUNKEL if KARTE_DUNKEL else NICHT_LAGE_HELL
-    schluessel = '<span class="leg-pin">1</span>Top 10'
+    schluessel = '<span class="leg-pin">1</span>Top 5'
     if nur_lagen:
         schluessel += f'<span class="leg-feld" style="background: rgb({nl[0]}, {nl[1]}, {nl[2]})"></span>keine Geschäftslage'
     ticks = "".join(f"<span>{v}</span>" for v in (0, 25, 50, 75, 100))
@@ -641,7 +641,8 @@ if "auswahl" not in st.session_state:
     st.session_state["auswahl"] = {}
 
 # Gemeinsame Auswahlbasis
-top = df[df["rang"].notna()].nsmallest(10, "rang").copy()
+TOP_N = 5  # so viele White Spots je Stadt zeigt die Karte
+top = df[df["rang"].notna()].nsmallest(TOP_N, "rang").copy()
 top["lage"] = top.apply(lagebezeichnung, axis=1, pois=pois)
 n_konsens = int(top["konsens"].sum())
 optionen = {f"#{int(r.rang)} {r.lage}": r.h3 for r in top.itertuples()}
@@ -819,8 +820,8 @@ if ansicht == "Konzept":
 
 # ---------------------------------------------------------------------- Karte
 elif ansicht == "Karte":
-    kopf("Karte", f"{stadt_name}: {n_konsens} der zehn besten Standorte liegen in beiden Sichten vorn" if n_konsens
-         else f"{stadt_name}: Die zehn besten Standorte im Überblick")
+    kopf("Karte", f"{stadt_name}: {n_konsens} der {TOP_N} besten Standorte liegen in beiden Sichten vorn" if n_konsens
+         else f"{stadt_name}: Die {TOP_N} besten Standorte im Überblick")
     spalte = EBENEN[ebene]
     werte = df[spalte] if spalte.startswith("pr_") else prozent(df[spalte])
     karte = df.copy()
@@ -1045,7 +1046,7 @@ elif ansicht == "Vergleich":
         spalten_w = [f"poi_{c}" for c in WETTBEWERB_DIREKT if f"poi_{c}" in d_.columns]
         wb_n = float(d_[spalten_w].sum().sum())
         ew = float(d_["einwohner"].sum())
-        t10 = d_[d_["rang"].notna()].nsmallest(10, "rang")
+        t10 = d_[d_["rang"].notna()].nsmallest(TOP_N, "rang")
         pl_ = lade_json(f"{k_}_plausibilitaet.json")
         profil = lagen["profil"].value_counts(normalize=True) * 100
         zeilen_s.append({
@@ -1075,8 +1076,8 @@ elif ansicht == "Vergleich":
             + zeile("Median-Miete", lambda z: f"{f1(z['miete'])} €/m²", "Bestandsmiete, Zensus 2022")
             + zeile("Direkte Wettbewerber", lambda z: f0(z["wb"]), "Deli, Feinkost, Bio, Markthalle, Wein, Pasta")
             + zeile("Wettbewerber je 100.000 Einwohner", lambda z: f1(z["wb_100k"]))
-            + zeile("Konsens-Standorte in den Top 10", lambda z: f"{z['konsens']} von 10", "Score und Angebotslücke beide im obersten Zehntel")
-            + zeile("Sichere Kandidaten in den Top 10", lambda z: f"{z['sicher']} von 10", "mindestens 70 Prozent der Robustheitsläufe")
+            + zeile("Konsens-Standorte in den Top 5", lambda z: f"{z['konsens']} von {TOP_N}", "Score und Angebotslücke beide im obersten Zehntel")
+            + zeile("Sichere Kandidaten in den Top 5", lambda z: f"{z['sicher']} von {TOP_N}", "mindestens 70 Prozent der Robustheitsläufe")
             + zeile("Plausibilitätstest", lambda z: f"{f0(z['plaus'])} %", "Wettbewerber in den 20 % Zellen mit höchstem Potenzial, Zufall wären 20 %")
             + zeile("Die drei besten Standorte", lambda z: "<br>".join(escape(t) for t in z["top3"]))
             + "</tbody></table>")
