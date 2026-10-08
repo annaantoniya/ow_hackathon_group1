@@ -1,0 +1,27 @@
+{
+  "deliveroo": {
+    "autor": "Deliveroo - upload: Giov.c",
+    "lizenz": "Public domain",
+    "seite": "https://commons.wikimedia.org/wiki/File:Deliveroo_Logo.svg"
+  },
+  "ubereats": {
+    "autor": "Uber Eats",
+    "lizenz": "Public domain",
+    "seite": "https://commons.wikimedia.org/wiki/File:Uber_Eats_2018_logo.svg"
+  },
+  "justeat": {
+    "autor": "Just Eat Takeaway",
+    "lizenz": "Public domain",
+    "seite": "https://commons.wikimedia.org/wiki/File:Just_Eat_Takeaway_Logo_6.2020.svg"
+  },
+  "wolt": {
+    "autor": "Wolt",
+    "lizenz": "Public domain",
+    "seite": "https://commons.wikimedia.org/wiki/File:Wolt_logo_black.png"
+  },
+  "lieferando": {
+    "autor": "Lieferando",
+    "lizenz": "CC BY-SA 4.0",
+    "seite": "https://commons.wikimedia.org/wiki/File:407862-Lieferando-Logo-Orange-Primary-Hor-RGB-01-4f2092-original-1637232254.png"
+  }
+}

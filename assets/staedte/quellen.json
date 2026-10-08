@@ -1,0 +1,17 @@
+{
+  "muenchen": {
+    "autor": "Martin Falbisoner",
+    "lizenz": "CC BY-SA 3.0",
+    "seite": "https://commons.wikimedia.org/wiki/File:Frauenkirche_and_Neues_Rathaus_Munich_March_2013.JPG"
+  },
+  "frankfurt": {
+    "autor": "Jörg Braukmann",
+    "lizenz": "CC BY-SA 4.0",
+    "seite": "https://commons.wikimedia.org/wiki/File:Frankfurt_Skyline_2022.jpg"
+  },
+  "berlin": {
+    "autor": "abbilder",
+    "lizenz": "CC BY 2.0",
+    "seite": "https://commons.wikimedia.org/wiki/File:Skyline_Berlin_-_Das_Humboldt-Forum_mit_Fernsehturm.jpg"
+  }
+}

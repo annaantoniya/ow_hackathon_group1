@@ -5,6 +5,7 @@ Fehlen die echten Dateien, nimmt die App die Demo-Daten aus data/demo/ (python a
 Aufbau: Alles Wichtige passt in eine Bildschirmhöhe. Blau gehört den Daten und aktiven Elementen,
 Flächen und Rahmen bleiben neutral. Start: streamlit run app.py
 """
+import base64
 import json
 from html import escape
 from pathlib import Path
@@ -16,12 +17,15 @@ import pydeck as pdk
 import streamlit as st
 from sklearn.neighbors import BallTree
 
+import konzept as K
+
 DATA = Path(__file__).parent / "data"
 DEMO = DATA / "demo"
 STAEDTE = {"München": "muenchen", "Frankfurt": "frankfurt", "Berlin": "berlin"}
 ERDRADIUS_M = 6_371_000
+ZOOM_STADT = 11.3
 WETTBEWERB_DIREKT = ["deli", "feinkost_kaese", "wein", "bio_markt", "reformhaus", "markthalle", "pasta"]
-ANSICHTEN = ["Karte", "Rangliste", "Vergleich", "Erklärung", "Annahmen"]
+ANSICHTEN = ["Konzept", "Karte", "Rangliste", "Vergleich", "Erklärung", "Annahmen"]
 
 # Farben: Midnight für Struktur, Bright Blue für Bedienung, Sky und Blau für Daten, Coral nur für die Top 10
 MIDNIGHT, BLUE, BRIGHT, SKY, CORAL, GREY = "#0B1B4D", "#002C77", "#2C6EF2", "#009DE0", "#EF4E45", "#6B7079"
@@ -127,7 +131,7 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .panel h4 {{ margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 700; color: {T['titel']}; }}
 .panel .abschnitt {{ border-top: 1px solid {T['rand']}; padding-top: 0.8rem; margin-top: 0.8rem; }}
 .panel p {{ font-size: 0.88rem; line-height: 1.45; margin: 0 0 0.6rem 0; color: {T['text']}; }}
-.panel small, .klein {{ color: {T['grau']}; font-size: 0.78rem; }}
+.panel small, .klein, p.klein {{ color: {T['grau']} !important; font-size: 0.78rem !important; line-height: 1.4 !important; }}
 .rang {{ display: flex; align-items: center; gap: 0.7rem; padding: 0.45rem 0; }}
 .rang + .rang {{ border-top: 1px solid {T['rand']}; }}
 .pin {{ display: inline-flex; flex: none; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: {BRIGHT}; color: #fff; font-size: 0.8rem; font-weight: 700; align-items: center; justify-content: center; }}
@@ -141,6 +145,10 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 
 .bumper {{ background: {T['bumper_bg']}; border: 1px solid {T['bumper_rand']}; border-left: 4px solid {T['akzent']}; margin-top: 0.35rem; padding: 0.55rem 1rem; font-weight: 700; font-size: 0.92rem; color: {T['titel']}; }}
 .quelle {{ font-size: 0.72rem; color: {T['grau']}; margin-top: 0.3rem; }}
+.statraster {{ display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 0.9rem; }}
+.stat {{ border-top: 1px solid {T['rand']}; padding-top: 0.35rem; }}
+.stat span {{ display: block; font-size: 0.72rem; color: {T['grau']}; }}
+.stat b {{ font-size: 1.05rem; color: {T['titel']}; }}
 .demo {{ font-size: 0.72rem; font-weight: 700; color: {T['demo']}; letter-spacing: 0.03em; }}
 
 .legende {{ display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem 2rem; background: {T['flaeche']}; border: 1px solid {T['rand']}; padding: 0.6rem 1rem; }}
@@ -168,6 +176,75 @@ section[data-testid="stSidebar"] h1 {{ font-family: Georgia, serif; font-weight:
 .spalte {{ height: calc({KOERPER} - 1.7rem); overflow: auto; padding-right: 0.4rem; }}
 .spalte ul {{ margin: 0; padding-left: 1.1rem; }}
 .spalte li {{ font-size: 0.86rem; line-height: 1.45; margin-bottom: 0.45rem; }}
+
+/* Startseite: Aufbau nach dem Vorbild von M&S Food und Waitrose. Überschriften in der Serifenschrift der Marke. */
+.w-intro h1 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 3.1rem; line-height: 1.1; letter-spacing: -0.015em; color: {T['titel']}; margin: 0.4rem 0 1.1rem 0; }}
+.w-intro h1 u {{ text-decoration-thickness: 3px; text-underline-offset: 7px; }}
+.w-intro-zeile {{ display: grid; grid-template-columns: 1fr 11rem; border-top: 1px solid {T['titel']}; }}
+.w-intro-zeile p {{ margin: 0; padding: 1.2rem 2rem 1.3rem 0; font-size: 1rem; line-height: 1.65; color: {T['text']}; max-width: 54rem; }}
+.w-intro-zeile .l {{ border-left: 1px solid {T['titel']}; display: flex; align-items: center; justify-content: center; }}
+.w-intro-zeile img {{ width: 4.4rem; height: 4.4rem; border-radius: 50%; }}
+.w-split {{ display: grid; grid-template-columns: 1.2fr 1fr; min-height: 440px; margin-top: 0.8rem; }}
+.w-split .bild {{ background-size: cover; background-position: center; position: relative; }}
+.w-split .text {{ background: {MIDNIGHT}; color: #FFFFFF; padding: 2.2rem 2.6rem; display: flex; flex-direction: column; justify-content: center; }}
+.w-kicker {{ font-size: 0.74rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8E9AC2; }}
+.w-marke {{ font-family: Georgia, "Times New Roman", serif; font-size: 5rem; line-height: 1; letter-spacing: 0.08em; margin: 0.6rem 0 0.4rem 0; color: #FFFFFF; }}
+.w-bez {{ font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 1.35rem; color: #CEECFF; }}
+.w-claim {{ font-family: Georgia, "Times New Roman", serif; font-size: 2.5rem; line-height: 1.1; margin-top: 1.4rem; color: #FFFFFF; }}
+.w-sub {{ color: #D6DCEB; font-size: 1rem; margin-top: 0.5rem; }}
+.w-namen {{ margin-top: 1.6rem; font-size: 0.78rem; letter-spacing: 0.28em; color: #8E9AC2; }}
+.w-namen .treffer {{ color: #FFFFFF; font-weight: 700; }}
+.w-namen small {{ letter-spacing: 0.02em; margin-left: 0.8rem; font-size: 0.72rem; }}
+.fallback {{ background: #CEECFF; color: {MIDNIGHT}; display: flex; align-items: center; justify-content: center; text-align: center; font-family: Georgia, "Times New Roman", serif; font-size: 1.1rem; font-style: italic; }}
+.w-usp {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.8rem; background: #CEECFF; padding: 1.7rem 2rem 1.4rem 2rem; margin: 1rem 0 0 0; }}
+.w-usp .u {{ display: flex; gap: 0.9rem; align-items: flex-start; border-bottom: 1px solid {MIDNIGHT}; padding-bottom: 1rem; }}
+.w-usp .ik {{ flex: none; width: 2.7rem; height: 2.7rem; border-radius: 8px; background: {MIDNIGHT}; display: flex; align-items: center; justify-content: center; }}
+.w-usp svg {{ width: 1.45rem; height: 1.45rem; stroke: #FFFFFF; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }}
+.w-usp b {{ display: block; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.1rem; line-height: 1.2; color: {MIDNIGHT}; margin-bottom: 0.2rem; }}
+.w-usp span {{ font-size: 0.84rem; line-height: 1.45; color: {MIDNIGHT}; }}
+.w-kopf {{ margin: 2.6rem 0 1.1rem 0; border-bottom: 1px solid {T['titel']}; padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }}
+.w-kopf .w-t {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 2.2rem !important; line-height: 1.1; letter-spacing: -0.01em; margin: 0; color: {T['titel']} !important; }}
+.w-kopf > span {{ font-size: 0.86rem; color: {T['grau']}; text-align: right; max-width: 28rem; }}
+.w-promos {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }}
+.w-promo {{ display: grid; grid-template-columns: 1fr 1fr; min-height: 310px; color: #FFFFFF; }}
+.w-promo .t {{ padding: 1.8rem 1.7rem; display: flex; flex-direction: column; justify-content: center; }}
+.w-promo h3 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.9rem; line-height: 1.15; color: #CEECFF; margin: 0 0 0.8rem 0; }}
+.w-promo p {{ font-size: 0.94rem; line-height: 1.55; margin: 0; color: #FFFFFF; }}
+.w-promo .b {{ background-size: cover; background-position: center; position: relative; }}
+.w-badge {{ position: absolute; top: 1rem; right: 1rem; width: 6rem; height: 6rem; border-radius: 50%; background: #CEECFF; color: {MIDNIGHT}; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: Georgia, "Times New Roman", serif; line-height: 1.05; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25); }}
+.w-badge b {{ font-size: 1.35rem; font-weight: 400; display: block; }}
+.w-badge span {{ font-size: 0.95rem; font-style: italic; display: block; }}
+.w-cards {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }}
+.w-card {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; }}
+.w-card .b {{ height: 215px; background-size: cover; background-position: center; position: relative; }}
+.w-card .b span {{ position: absolute; left: 0; bottom: 0; background: {MIDNIGHT}; color: #fff; padding: 0.3rem 0.9rem; font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; }}
+.w-card .i {{ padding: 1rem 1.3rem 1.2rem 1.3rem; }}
+.w-card h4 {{ font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.45rem; line-height: 1.15; margin: 0 0 0.4rem 0; color: {T['titel']}; }}
+.w-card p {{ margin: 0; font-size: 0.88rem; line-height: 1.5; color: {T['text']}; }}
+.w-liefer {{ display: grid; grid-template-columns: 1fr 1.7fr; gap: 2.2rem; align-items: center; }}
+.w-liefer p {{ margin: 0 0 0.4rem 0; font-size: 0.98rem; line-height: 1.6; color: {T['text']}; }}
+.w-liefer small {{ color: {T['grau']}; }}
+.w-logos {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.8rem; }}
+.w-logos div {{ background: #FFFFFF; border: 1px solid {T['rand']}; border-radius: 14px; display: flex; align-items: center; justify-content: center; height: 4.6rem; padding: 0.6rem 0.8rem; }}
+.w-logos img {{ max-height: 2.2rem; max-width: 100%; object-fit: contain; }}
+.review {{ background: {T['flaeche']}; border: 1px solid {T['rand']}; padding: 1.1rem 1.2rem 1rem 1.2rem; display: flex; flex-direction: column; }}
+.review .foto {{ height: 250px; background-size: cover; background-position: center 24%; margin: -1.1rem -1.2rem 0.9rem -1.2rem; }}
+.review .kopfzeile {{ display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.7rem; }}
+.review .avatar {{ flex: none; width: 3.2rem; height: 3.2rem; border-radius: 50%; background: #CEECFF; color: {MIDNIGHT}; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background-size: cover; background-position: center; }}
+.review .wer b {{ display: block; color: {T['titel']}; font-size: 0.98rem; }}
+.review .wer span {{ font-size: 0.8rem; color: {T['grau']}; }}
+.review .sterne {{ color: #F2A900; letter-spacing: 0.12em; font-size: 0.95rem; }}
+.review h5 {{ margin: 0.2rem 0 0.4rem 0; font-size: 0.98rem; color: {T['titel']}; line-height: 1.3; }}
+.review p {{ margin: 0 0 0.6rem 0; font-size: 0.86rem; line-height: 1.5; color: {T['text']}; flex: 1; }}
+.review .daten {{ border-top: 1px solid {T['rand']}; padding-top: 0.6rem; }}
+.review .daten small {{ display: block; color: {T['grau']}; font-size: 0.74rem; margin-top: 0.2rem; }}
+.fiktiv {{ margin-left: auto; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: {T['grau']}; border: 1px solid {T['rand']}; padding: 0.1rem 0.45rem; }}
+.frage {{ border-left: 4px solid {T['akzent']}; padding: 0.2rem 0 0.2rem 1rem; margin: 1.4rem 0 0.8rem 0; font-weight: 700; color: {T['titel']}; font-size: 1.05rem; line-height: 1.4; max-width: 56rem; }}
+.frage small {{ display: block; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.68rem; color: {T['akzent']}; margin-bottom: 0.2rem; }}
+.fuss {{ margin-top: 1.4rem; font-size: 0.72rem; color: {T['grau']}; line-height: 1.5; }}
+.st-key-pilotkarte [data-testid="stDeckGlJsonChart"], .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] > div, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] iframe {{ height: 520px !important; }}
+.st-key-pilotkarte .panel {{ height: 520px; }}
+.st-key-pilotkarte [data-testid="stDeckGlJsonChart"] button, .st-key-pilotkarte [data-testid="stDeckGlJsonChart"] .deck-widget {{ display: none !important; }}
 
 /* Kopfzeile: Ansichten zum Durchklicken, Linie unter der ganzen Leiste */
 [data-testid="stElementContainer"]:has([data-testid="stButtonGroup"]) {{ width: 100% !important; }}
@@ -247,6 +324,21 @@ def lade_parameter():
         return PARAMETER
     except Exception:  # analyse.py fehlt oder bricht beim Import ab
         return None
+
+
+@st.cache_data(show_spinner=False)
+def viertel(lat: float, lon: float):
+    """Viertel und Bezirk zu einer Koordinate über Nominatim (OpenStreetMap). Ohne Netz gibt es None."""
+    import urllib.request
+    url = f"https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&addressdetails=1&accept-language=de&lat={lat:.5f}&lon={lon:.5f}"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "olive-whitespot-hackathon/1.0"})
+        a = json.load(urllib.request.urlopen(req, timeout=6)).get("address", {})
+    except Exception:
+        return None
+    teil = a.get("suburb") or a.get("neighbourhood") or a.get("quarter") or a.get("city_district") or a.get("town") or a.get("village")
+    bezirk = a.get("city_district") if a.get("city_district") != teil else a.get("borough")
+    return (teil, bezirk) if teil else None
 
 
 def lagebezeichnung(zeile, pois) -> str:
@@ -368,6 +460,82 @@ def theme_chart(chart):
             .configure_header(labelColor=farbe_achse))
 
 
+@st.cache_data
+def bild_uri(relativ: str):
+    """Bild als eingebetteter Datenstrom für HTML. Fehlt die Datei, gibt es None und die Seite zeigt eine Fläche."""
+    p = Path(__file__).parent / relativ
+    if not p.exists():
+        return None
+    mime = {".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp"}.get(p.suffix.lower(), "image/jpeg")
+    return f"data:{mime};base64," + base64.b64encode(p.read_bytes()).decode()
+
+
+def generiert(schluessel: str):
+    """Selbst erzeugtes Bild unter assets/bilder/<schluessel>.jpg, .png oder .webp. Fehlt es, gibt es None."""
+    for endung in ("jpg", "jpeg", "png", "webp"):
+        uri_ = bild_uri(f"assets/bilder/{schluessel}.{endung}")
+        if uri_:
+            return uri_
+    return None
+
+
+def flaeche(schluessel: str, klasse: str, extra: str = "") -> str:
+    """HTML-Element mit dem Bild als Hintergrund. Fehlt das Bild, steht eine Farbfläche mit "Bild folgt"."""
+    uri_ = generiert(schluessel)
+    if uri_:
+        return f'<div class="{klasse}" style="background-image:url({uri_})">{extra}</div>'
+    return f'<div class="{klasse} fallback">{extra}<span>Bild folgt</span></div>'
+
+
+ICONS = {
+    "phone": '<rect x="7" y="2.5" width="10" height="19" rx="2.2"/><line x1="11" y1="18" x2="13" y2="18"/>',
+    "clock": '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>',
+    "moon": '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    "bag": '<path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/>',
+    "leaf": '<path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19c3-5 6-8 11-10"/>',
+}
+
+
+def marke_im_namen(marke: str, voll: str) -> str:
+    """Der volle Name mit den Buchstaben der Marke hervorgehoben. Jeder Buchstabe wird höchstens einmal benutzt."""
+    uebrig = list(marke.upper().replace(" ", ""))
+    teile = []
+    for zeichen in voll:
+        if zeichen != " " and zeichen.upper() in uebrig:
+            uebrig.remove(zeichen.upper())
+            teile.append(f'<span class="treffer">{escape(zeichen)}</span>')
+        else:
+            teile.append("&nbsp;&nbsp;" if zeichen == " " else escape(zeichen))
+    return "".join(teile)
+
+
+def bildnachweise() -> str:
+    """Autor und Lizenz aller geladenen Fotos und Logos, aus den quellen.json neben den Bildern."""
+    teile = set()
+    for ordner in ("assets/staedte", "assets/partner"):
+        p = Path(__file__).parent / ordner / "quellen.json"
+        if p.exists():
+            for v in json.loads(p.read_text(encoding="utf-8")).values():
+                teile.add(f'{v["autor"]} ({v["lizenz"]})')
+    return "Städtefotos und Partner-Logos: Wikimedia Commons. " + "; ".join(sorted(teile)) + ". Das runde Logo stellt die Gruppe bereit."
+
+
+@st.cache_data
+def pilotstandorte():
+    """Die drei bestplatzierten Standorte je Stadt, für die Karte auf der Startseite."""
+    teile = []
+    for c in K.STAEDTE:
+        d, _ = lade_stadt(c["key"])
+        if d is None:
+            continue
+        t = d[d["rang"].notna()].nsmallest(3, "rang").copy()
+        t["stadt_name"] = c["name"]
+        t["nr"] = range(1, len(t) + 1)
+        t["lage"] = t.apply(lagebezeichnung, axis=1, pois=lade_pois(c["key"]))
+        teile.append(t[["stadt_name", "nr", "lage", "lat", "lon", "profil"]])
+    return pd.concat(teile, ignore_index=True) if teile else None
+
+
 # ---------------------------------------------------------------- Seitenleiste
 st.sidebar.title("White Spots")
 stadt_name = st.sidebar.selectbox("Stadt", list(STAEDTE))
@@ -381,9 +549,9 @@ pois = lade_pois(key)
 # Kopfzeile: Ansichten zum Durchklicken links, Zahnrad rechts (Darstellung, Deckkraft der Felder, Kommentarfeld)
 nav, zahnrad = st.columns([9.6, 2.0], vertical_alignment="center")
 with nav:
-    gewaehlte_ansicht = st.segmented_control("Ansicht", ANSICHTEN, default="Karte", key="ansicht",
+    gewaehlte_ansicht = st.segmented_control("Ansicht", ANSICHTEN, default="Konzept", key="ansicht",
                                              label_visibility="collapsed")
-ansicht = gewaehlte_ansicht or "Karte"  # ein Klick auf die aktive Ansicht würde sie abwählen
+ansicht = gewaehlte_ansicht or "Konzept"  # ein Klick auf die aktive Ansicht würde sie abwählen
 with zahnrad.popover("Einstellungen", icon=":material/settings:", use_container_width=True):
     st.radio("Darstellung", ["Hell", "Dunkel"], key="darstellung", horizontal=True)
     st.slider("Deckkraft der Felder", 0.2, 1.0, 0.9, 0.05, key="deckkraft",
@@ -417,11 +585,8 @@ elif ansicht == "Rangliste":
     zeige_wahl = st.sidebar.selectbox("Auf der Karte zeigen", list(optionen))
     st.sidebar.button("Zur Karte", on_click=lambda: (st.session_state["auswahl"].__setitem__(key, optionen[zeige_wahl]),
                                                      st.session_state.update(ansicht="Karte")))
-if ist_demo:
-    st.sidebar.markdown('<div class="demo">Demo-Daten, synthetisch. Keine echten Ergebnisse.</div>', unsafe_allow_html=True)
 
-QUELLE = "Quellen: OpenStreetMap-Mitwirkende, Statistisches Bundesamt (Zensus 2022)." + (
-    " Demo-Daten, synthetisch." if ist_demo else "")
+QUELLE = "Quellen: OpenStreetMap-Mitwirkende, Statistisches Bundesamt (Zensus 2022)."
 
 
 def zweispaltig():
@@ -431,8 +596,122 @@ def zweispaltig():
     return st.container(), None
 
 
+# --------------------------------------------------------------------- Konzept
+if ansicht == "Konzept":
+    def uri(pfad_):
+        return bild_uri(pfad_) or ""
+
+    logo = bild_uri("assets/logo.png")
+    titel_html = escape(K.INTRO_TITEL).replace(escape(K.INTRO_UNTERSTRICHEN), f"<u>{escape(K.INTRO_UNTERSTRICHEN)}</u>", 1)
+    usps = "".join(
+        f'<div class="u"><div class="ik"><svg viewBox="0 0 24 24">{ICONS.get(ic, "")}</svg></div><div><b>{escape(t)}</b><span>{escape(x)}</span></div></div>'
+        for ic, t, x in K.USPS)
+    wert = "".join(
+        f'<div class="w-promo" style="background:{w["farbe"]}"><div class="t"><h3>{escape(w["titel"])}</h3><p>{escape(w["text"])}</p></div>'
+        + flaeche(w["bild"], "b", f'<div class="w-badge"><b>{escape(w["plakette"][0])}</b><span>{escape(w["plakette"][1])}</span></div>')
+        + "</div>" for w in K.WERT)
+    sortiment = "".join(
+        f'<div class="w-card">{flaeche(bild, "b")}<div class="i"><h4>{escape(titel)}</h4><p>{escape(text)}</p></div></div>'
+        for titel, text, bild in K.SORTIMENT)
+    staedte = ""
+    for c in K.STAEDTE:
+        bild_c = generiert("stadt_" + c["key"]) or bild_uri(c["bild"]) or ""
+        staedte += (f'<div class="w-card"><div class="b" style="background-image:url({bild_c}); background-color:{MIDNIGHT}"><span>{escape(c["name"])}</span></div>'
+                    f'<div class="i"><p>{escape(c["text"])}</p></div></div>')
+    personas = ""
+    for p in K.PERSONAS:
+        foto = bild_uri(p["foto"])
+        avatar = "" if foto else f'<div class="avatar">{escape(p["kuerzel"])}</div>'
+        bild_p = f'<div class="foto" style="background-image:url({foto})"></div>' if foto else ""
+        personas += (f'<div class="review">{bild_p}<div class="kopfzeile">{avatar}'
+                     f'<div class="wer"><b>{escape(p["name"])}, {escape(p["alter"])}</b><span>{escape(p["rolle"])} aus {escape(p["stadt"])}</span></div>'
+                     f'<span class="fiktiv">fiktiv</span></div>'
+                     f'<div class="sterne">{"★" * p["sterne"]}</div><h5>{escape(p["titel"])}</h5><p>„{escape(p["text"])}“</p>'
+                     f'<div class="daten">' + "".join(f'<span class="chip">{escape(c)}</span>' for c in p["signale"])
+                     + f'<small>Quelle: {escape(p["quelle"])} · Im Modell: {escape(p["modell"])}</small></div></div>')
+    logos = "".join(f'<div title="{escape(n)}"><img src="{uri(l)}" alt="{escape(n)}"></div>' for n, l in K.LIEFERUNG_PARTNER)
+
+    st.markdown(f"""
+<div class="w-intro">
+  <h1>{titel_html}</h1>
+  <div class="w-intro-zeile"><p>{escape(K.INTRO_TEXT)}</p><div class="l">{f'<img src="{logo}" alt="Logo">' if logo else ""}</div></div>
+</div>
+
+<div class="w-split">
+  {flaeche(K.HERO_BILD, "bild")}
+  <div class="text">
+    <div class="w-kicker">{escape(K.VERANSTALTUNG)}</div>
+    <div class="w-marke">{escape(K.MARKE)}</div>
+    <div class="w-bez">{escape(K.BEZEICHNUNG)}</div>
+    <div class="w-claim">{escape(K.CLAIM)}</div>
+    <div class="w-sub">{escape(K.UNTERZEILE)}</div>
+  </div>
+</div>
+<div class="w-usp">{usps}</div>
+
+<div class="w-kopf"><div class="w-t">Wertversprechen</div><span>Zwei Momente, ein Laden</span></div>
+<div class="w-promos">{wert}</div>
+
+<div class="w-kopf"><div class="w-t">Vom Deli-Tresen</div><span>Italienisch, mediterran, französisch, regional und gesund</span></div>
+<div class="w-cards">{sortiment}</div>
+
+<div class="w-kopf"><div class="w-t">Drei Städte, drei Hypothesen</div><span>Was jede Stadt dem Modell abverlangt</span></div>
+<div class="w-cards">{staedte}</div>
+
+<div class="w-kopf"><div class="w-t">Zielgruppen</div><span>Drei fiktive Personas, die unsere Datenwahl begründen</span></div>
+<div class="w-cards">{personas}</div>
+
+<div class="w-kopf"><div class="w-t">Lieferung</div><span>Mögliche Partner</span></div>
+<div class="w-liefer"><div><p>{escape(K.LIEFERUNG_TEXT)}</p><small>{escape(K.LIEFERUNG_HINWEIS)}</small></div><div class="w-logos">{logos}</div></div>
+
+<div class="w-kopf"><div class="w-t">Pilotstandorte</div><span>So finden Sie uns</span></div>
+<p style="margin:0 0 0.9rem 0; font-size:0.95rem; color:{T['text']}">{escape(K.PILOT_TEXT)}</p>
+""", unsafe_allow_html=True)
+
+    pil = pilotstandorte()
+    if pil is not None and len(pil):
+        sicht = pil[pil["nr"] == 1].reset_index(drop=True)  # je Stadt der beste White Spot
+        sicht["text"] = ""
+        st.session_state.setdefault("pilot_stadt", None)   # None = ganz Deutschland, sonst Name der herangezoomten Stadt
+        st.session_state.setdefault("pilot_zaehler", 0)
+        fokus = st.session_state["pilot_stadt"]
+        if fokus is not None and fokus in set(sicht["stadt_name"]):
+            z_ = sicht[sicht["stadt_name"] == fokus].iloc[0]
+            ansicht_pilot = pdk.ViewState(latitude=float(z_["lat"]), longitude=float(z_["lon"]), zoom=12.5, min_zoom=5.0, max_zoom=17)
+        else:
+            ansicht_pilot = pdk.ViewState(latitude=50.6, longitude=10.8, zoom=5.0, min_zoom=5.0, max_zoom=17)  # Deutschland
+        schichten_p = [
+            pdk.Layer("ScatterplotLayer", sicht, get_position=["lon", "lat"], get_radius=1500, radius_min_pixels=14, radius_max_pixels=14,
+                      get_fill_color=[44, 110, 242, 255], get_line_color=CORAL_RGB + [255], stroked=True,
+                      line_width_min_pixels=4, pickable=True, id="pilot"),
+        ]
+        with st.container(key="pilotkarte"):
+            links, rechts = st.columns([7.4, 3.6], gap="medium")
+            with links:
+                ereignis_p = st.pydeck_chart(
+                    pdk.Deck(layers=schichten_p, initial_view_state=ansicht_pilot, map_style=T["karte"],
+                             tooltip={"html": "<b>{stadt_name}</b><br>{lage}<br>Klicken zum Hinein- und Herauszoomen",
+                                      "style": {"fontSize": "13px", "fontFamily": "Arial"}}),
+                    width="stretch", height=520, on_select="rerun", selection_mode="single-object",
+                    key=f"pilotkarte_{st.session_state['pilot_zaehler']}")
+                obj = (ereignis_p.selection.objects.get("pilot") if ereignis_p and ereignis_p.selection else None) or []
+                if obj:  # Klick: Stadt heranzoomen, bei erneutem Klick auf dieselbe Stadt wieder herauszoomen
+                    gewaehlt_p = obj[0].get("stadt_name")
+                    st.session_state["pilot_stadt"] = None if st.session_state["pilot_stadt"] == gewaehlt_p else gewaehlt_p
+                    st.session_state["pilot_zaehler"] += 1  # neuer Schlüssel setzt die Auswahl zurück, damit jeder Klick zählt
+                    st.rerun()
+            with rechts:
+                gruppen = '<h4>Bester White Spot je Stadt</h4>'
+                for r in sicht.itertuples():
+                    gruppen += (f'<div class="rang"><span class="pin">{r.Index + 1}</span><div class="rang-t"><b>{escape(r.stadt_name)}</b>'
+                                f'<span>{escape(r.lage)} · {escape(r.profil)}</span></div></div>')
+                panel(gruppen + '<p class="klein" style="margin-top:0.8rem">Marker anklicken zoomt in die Stadt, ein weiterer Klick zoomt zurück.</p>')
+    st.markdown(f'<div class="frage"><small>Business-Frage</small>{escape(K.BUSINESS_FRAGE)}</div>', unsafe_allow_html=True)
+    st.button("Zur Karte öffnen", on_click=lambda: st.session_state.update(ansicht="Karte"), type="primary")
+    st.markdown(f'<div class="fuss">{escape(K.HINWEIS)}<br>{escape(bildnachweise())}</div>', unsafe_allow_html=True)
+
 # ---------------------------------------------------------------------- Karte
-if ansicht == "Karte":
+elif ansicht == "Karte":
     kopf("Karte", f"{stadt_name}: {n_konsens} der zehn besten Standorte liegen in beiden Sichten vorn" if n_konsens
          else f"{stadt_name}: Die zehn besten Standorte im Überblick")
     spalte = EBENEN[ebene]
@@ -459,7 +738,7 @@ if ansicht == "Karte":
     schichten = [
         pdk.Layer("H3HexagonLayer", karte, get_hexagon="h3", get_fill_color="farbe",
                   get_line_color=[255, 255, 255, 90], line_width_min_pixels=0.4,
-                  extruded=False, opacity=1, pickable=True),
+                  extruded=False, opacity=1, pickable=True, id="hex"),
         pdk.Layer("H3HexagonLayer", top, get_hexagon="h3", get_fill_color=[0, 0, 0, 0],
                   get_line_color=CORAL_RGB + [255], stroked=True, filled=False,
                   line_width_min_pixels=4, extruded=False),
@@ -482,23 +761,56 @@ if ansicht == "Karte":
     tooltip = {"html": "<b>Rang {rang_txt}</b> · Score-Prozentrang {pr_score}<br>{profil}<br><i>{staerke}</i>",
                "style": {"fontSize": "13px", "maxWidth": "320px", "fontFamily": "Arial"}}
 
+    if auswahl is not None and auswahl in set(df["h3"]):  # gewähltes Feld hervorheben und Einzugsgebiet (400 m) zeigen
+        zeile_a = df[df["h3"] == auswahl]
+        schichten.append(pdk.Layer("H3HexagonLayer", zeile_a, get_hexagon="h3", get_fill_color=[0, 0, 0, 0],
+                                   get_line_color=[255, 255, 255, 255] if DUNKEL else [11, 27, 77, 255], stroked=True, filled=False,
+                                   line_width_min_pixels=5, extruded=False))
+        schichten.append(pdk.Layer("ScatterplotLayer", zeile_a, get_position=["lon", "lat"], get_radius=400,
+                                   get_fill_color=[44, 110, 242, 30], get_line_color=[44, 110, 242, 220], stroked=True,
+                                   line_width_min_pixels=2))
+
     links, rechts = zweispaltig()
     with links:
         if rechts is None:  # ohne Kommentarfeld sitzt die Legende über der Karte
             st.markdown(legende_html(ebene, stadt_name, nur_lagen, senkrecht=False), unsafe_allow_html=True)
-        st.pydeck_chart(pdk.Deck(layers=schichten, initial_view_state=view, map_style=T["karte"], tooltip=tooltip),
-                        width="stretch", height=600)
+        ereignis = st.pydeck_chart(pdk.Deck(layers=schichten, initial_view_state=view, map_style=T["karte"], tooltip=tooltip),
+                                   width="stretch", height=600, on_select="rerun", selection_mode="single-object",
+                                   key=f"karte_{key}")
+        objekte = (ereignis.selection.objects.get("hex") if ereignis and ereignis.selection else None) or []
+        if objekte and objekte[0].get("h3") != auswahl:
+            st.session_state["auswahl"][key] = objekte[0]["h3"]
+            st.rerun()
     if rechts is not None:
         with rechts:
-            reihen = ""
-            for r in top.head(3).itertuples():
-                konsens = " · Konsens" if r.konsens else ""
-                reihen += (f'<div class="rang"><span class="pin">{int(r.rang)}</span><div class="rang-t"><b>{escape(r.lage)}</b>'
-                           f'<span>{escape(r.profil)} · {escape(stabilitaet(r.top10_anteil))}{konsens}</span></div>'
-                           f'<span class="rang-s">{r.pr_score:.0f}</span></div>')
-            panel(legende_html(ebene, stadt_name, nur_lagen, senkrecht=True)
-                  + '<div class="abschnitt"><h4>Die drei besten Standorte</h4>' + reihen
-                  + '<p class="klein" style="margin-top:0.4rem">Zahl rechts: Score-Prozentrang. Alle zehn in der Rangliste.</p></div>')
+            if auswahl is not None and auswahl in set(df["h3"]):
+                st.button("Auswahl aufheben", on_click=lambda: st.session_state["auswahl"].pop(key, None))
+                z = df[df["h3"] == auswahl].iloc[0]
+                v = viertel(round(float(z["lat"]), 4), round(float(z["lon"]), 4))
+                titel_v = v[0] if v else f"{z['lat']:.4f}, {z['lon']:.4f}"
+                bezirk_v = f"{v[1]}, {stadt_name}" if v and v[1] else stadt_name
+                rang_v = f"Rang {int(z['rang'])}" if pd.notna(z["rang"]) else "keine Geschäftslage"
+                stat = lambda w, x: f'<div class="stat"><span>{escape(w)}</span><b>{escape(str(x))}</b></div>'
+                miete_v = f"{z['miete_qm']:.2f} €/m²" if pd.notna(z["miete_qm"]) else "–"
+                panel(f'<div class="kicker">Gewählter Standort</div><h4 style="font-size:1.25rem;margin:0.2rem 0 0">{escape(titel_v)}</h4>'
+                      f'<p class="klein" style="margin:0 0 0.7rem 0">{escape(bezirk_v)} · {rang_v}</p>'
+                      f'<div class="statraster">{stat("Score (PR)", f"{z.pr_score:.0f}" if pd.notna(z.pr_score) else "–")}'
+                      f'{stat("Angebotslücke (PR)", f"{z.pr_luecke:.0f}" if pd.notna(z.pr_luecke) else "–")}'
+                      f'{stat("Einwohner (400 m)", f"{z.einwohner_400m:,.0f}".replace(",", "."))}'
+                      f'{stat("Wettbewerber (400 m)", f"{z.wettbewerber_400m:.0f}")}'
+                      f'{stat("Miete", miete_v)}{stat("Profil", z.profil)}</div>'
+                      f'<div class="abschnitt"><p>{escape(staerken_satz(z))}</p>'
+                      f'<p class="klein">Der blaue Kreis zeigt das Einzugsgebiet von 400 m.</p></div>')
+            else:
+                reihen = ""
+                for r in top.head(3).itertuples():
+                    konsens = " · Konsens" if r.konsens else ""
+                    reihen += (f'<div class="rang"><span class="pin">{int(r.rang)}</span><div class="rang-t"><b>{escape(r.lage)}</b>'
+                               f'<span>{escape(r.profil)} · {escape(stabilitaet(r.top10_anteil))}{konsens}</span></div>'
+                               f'<span class="rang-s">{r.pr_score:.0f}</span></div>')
+                panel(legende_html(ebene, stadt_name, nur_lagen, senkrecht=True)
+                      + '<div class="abschnitt"><h4>Die drei besten Standorte</h4>' + reihen
+                      + '<p class="klein" style="margin-top:0.4rem">Zahl rechts: Score-Prozentrang. Ein Feld anklicken zeigt Viertel und Kennzahlen.</p></div>')
     bumper(f"Priorität: {top.iloc[0]['lage']} zuerst prüfen, danach die Standorte mit Konsens-Kennzeichnung.")
     quelle(QUELLE)
 
