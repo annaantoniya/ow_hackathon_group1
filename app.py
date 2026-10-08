@@ -201,6 +201,13 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .w-intro-zeile .l {{ border-left: 1px solid {T['titel']}; display: flex; align-items: center; justify-content: center; }}
 .w-intro-zeile img {{ width: 4.4rem; height: 4.4rem; border-radius: 50%; }}
 .w-split {{ display: grid; grid-template-columns: 1.3fr 1fr; min-height: 440px; margin-top: 0.8rem; }}
+.zm {{ overflow: hidden; position: relative; }}
+.zm::before {{ content: ""; position: absolute; inset: 0; background-image: inherit; background-size: cover; background-position: inherit; transform: scale(var(--z, 1.25)); transform-origin: var(--o, center); }}
+.w-split .bild.zm {{ --z: 1.12; --o: 40% 15%; }}
+.w-promo .b.zm {{ --z: 1.3; --o: 55% 25%; }}
+.w-card.slim .b.zm {{ --z: 1.3; }}
+.w-card .b.zm {{ --z: 1.18; }}
+.review .foto.zm {{ --z: 1.15; --o: 50% 0%; }}
 .w-split .bild {{ background-size: cover; background-position: center top; position: relative; }}
 .w-split .text {{ background: {MIDNIGHT}; color: #FFFFFF; padding: 2.2rem 2.6rem; display: flex; flex-direction: column; justify-content: center; }}
 .w-kicker {{ font-size: 0.74rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8E9AC2; }}
@@ -255,7 +262,7 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 .review .wer span {{ font-size: 0.8rem; color: {T['grau']}; }}
 .review .sterne {{ color: #F2A900; letter-spacing: 0.12em; font-size: 0.95rem; }}
 .review h5 {{ margin: 0.2rem 0 0.4rem 0; font-size: 1rem; color: {T['titel']}; line-height: 1.3; }}
-.review p {{ margin: 0 0 0.6rem 0; font-size: 0.88rem; line-height: 1.5; color: {T['text']}; flex: 1; }}
+.review p {{ margin: 0 0 0.2rem 0; font-size: 0.88rem; line-height: 1.5; color: {T['text']}; flex: 1; }}
 .review .daten {{ border-top: 1px solid {T['rand']}; padding-top: 0.6rem; }}
 .review .daten small {{ display: block; color: {T['grau']}; font-size: 0.74rem; margin-top: 0.2rem; }}
 .fiktiv {{ margin-left: auto; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: {T['grau']}; border: 1px solid {T['rand']}; padding: 0.1rem 0.45rem; }}
@@ -288,7 +295,7 @@ table.vgl tbody tr:hover td, table.vgl tbody tr:hover th.z {{ background: {T['ho
 /* Kopfzeile: Ansichten zum Durchklicken, Linie unter der ganzen Leiste */
 [data-testid="stElementContainer"]:has([data-testid="stButtonGroup"]) {{ width: 100% !important; }}
 [data-testid="stButtonGroup"] {{ width: 100%; gap: 0; border-bottom: 1px solid {T['rand']}; }}
-[data-testid="stButtonGroup"] button {{ border-radius: 0; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; background: transparent !important; color: {T['grau']}; font-weight: 600; padding: 0.45rem 1.1rem; }}
+[data-testid="stButtonGroup"] button {{ border-radius: 0; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; background: transparent !important; color: {T['grau']}; font-weight: 600; font-size: 1.05rem; padding: 0.6rem 1.4rem; }}
 [data-testid="stButtonGroup"] button:hover {{ color: {T['titel']}; border-bottom-color: {T['rand']}; }}
 [data-testid="stButtonGroup"] button[aria-checked="true"] {{ border-bottom: 3px solid {T['akzent']} !important; }}
 [data-testid="stButtonGroup"] button[aria-checked="true"] * {{ color: {T['titel']} !important; font-weight: 700; }}
@@ -538,7 +545,7 @@ def flaeche(schluessel: str, klasse: str, extra: str = "") -> str:
     """HTML-Element mit dem Bild als Hintergrund. Fehlt das Bild, steht eine Farbfläche mit "Bild folgt"."""
     uri_ = generiert(schluessel)
     if uri_:
-        return f'<div class="{klasse}" style="background-image:url({uri_})">{extra}</div>'
+        return f'<div class="{klasse} zm" style="background-image:url({uri_})">{extra}</div>'
     return f'<div class="{klasse} fallback">{extra}<span>Bild folgt</span></div>'
 
 
@@ -712,19 +719,18 @@ if ansicht == "Konzept":
     staedte = ""
     for c in K.STAEDTE:
         bild_c = generiert("stadt_" + c["key"]) or bild_uri(c["bild"]) or ""
-        staedte += (f'<div class="w-card"><div class="b" style="background-image:url({bild_c}); background-color:{MIDNIGHT}"><span>{escape(c["name"])}</span></div>'
+        staedte += (f'<div class="w-card"><div class="b zm" style="background-image:url({bild_c}); background-color:{MIDNIGHT}"><span>{escape(c["name"])}</span></div>'
                     f'<div class="i"><p>{escape(c["text"])}</p></div></div>')
     personas = ""
     for p in K.PERSONAS:
         foto = bild_uri(p["foto"])
         avatar = "" if foto else f'<div class="avatar">{escape(p["kuerzel"])}</div>'
-        bild_p = f'<div class="foto" style="background-image:url({foto})"></div>' if foto else ""
+        bild_p = f'<div class="foto zm" style="background-image:url({foto})"></div>' if foto else ""
         personas += (f'<div class="review">{bild_p}<div class="kopfzeile">{avatar}'
                      f'<div class="wer"><b>{escape(p["name"])}, {escape(p["alter"])}</b><span>{escape(p["rolle"])} aus {escape(p["stadt"])}</span></div>'
                      f'<span class="fiktiv">fiktiv</span></div>'
                      f'<div class="sterne">{"★" * p["sterne"]}</div><h5>{escape(p["titel"])}</h5><p>„{escape(p["text"])}“</p>'
-                     f'<div class="daten">' + "".join(f'<span class="chip">{escape(c)}</span>' for c in p["signale"])
-                     + f'<small>Quelle: {escape(p["quelle"])} · Im Modell: {escape(p["modell"])}</small></div></div>')
+                     + '</div>')
     logos = "".join(f'<div title="{escape(n)}"><img src="{uri(l)}" alt="{escape(n)}"></div>' for n, l in K.LIEFERUNG_PARTNER)
 
     st.markdown(f"""
